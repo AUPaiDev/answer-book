@@ -29,10 +29,10 @@
         #particles{position:fixed;inset:0;z-index:3;pointer-events:none}
 
         /* Top bar */
-        .top-bar{position:fixed;top:0;right:0;z-index:50;padding:max(env(safe-area-inset-top,10px),10px) 14px 0}
-        .icon-btn{background:rgba(212,175,55,.06);border:1px solid rgba(212,175,55,.2);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;backdrop-filter:blur(10px)}
+        .top-bar{position:fixed;top:0;right:0;left:0;z-index:50;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,10px),10px) 14px 0;pointer-events:none}
+        .icon-btn{background:rgba(212,175,55,.06);border:1px solid rgba(212,175,55,.2);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;backdrop-filter:blur(10px);pointer-events:auto}
         .icon-btn:active{transform:scale(.9)}
-        .icon-btn svg{width:16px;height:16px;fill:var(--gold);opacity:.6}
+        .icon-btn svg{width:16px;height:16px;fill:var(--gold);opacity:.75}
 
         /* Scenes */
         .scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 10px max(env(safe-area-inset-bottom,12px),12px);opacity:0;visibility:hidden;transition:opacity .7s,visibility 0s .7s;pointer-events:none}
@@ -61,7 +61,7 @@
         .book-spread{
             display:flex;position:relative;
             width:clamp(290px,90vw,640px);
-            height:clamp(190px,34vh,340px);
+            height:clamp(210px,36vh,350px);
             filter:drop-shadow(0 6px 30px rgba(0,0,0,.55)) drop-shadow(0 0 50px rgba(212,175,55,.05));
             transition:box-shadow .5s;
         }
@@ -135,14 +135,23 @@
         .q-icon{margin-top:auto;margin-bottom:8px;opacity:.15}
         .q-icon svg{width:28px;height:28px;stroke:var(--ink);fill:none;stroke-width:1.2}
         .q-guide{font-size:.72rem;color:var(--ink2);text-align:center;line-height:1.6;letter-spacing:1px;margin-bottom:auto}
-        .q-title{font-size:.95rem;font-weight:700;color:var(--ink);text-align:center;margin-bottom:14px;margin-top:auto;letter-spacing:1px}
+        .q-title{font-size:.95rem;font-weight:700;color:var(--ink);text-align:center;margin-bottom:8px;margin-top:auto;letter-spacing:1px}
         .q-input{
-            width:90%;background:transparent;border:none;border-bottom:1.5px solid rgba(44,37,30,.18);
-            font-family:'Noto Serif SC',serif;font-size:1rem;color:var(--ink);
-            padding:6px 2px;margin-bottom:16px;text-align:center;outline:none;transition:border-color .3s;
+            width:92%;background:transparent;border:none;border-bottom:1.5px solid rgba(44,37,30,.18);
+            font-family:'Noto Serif SC',serif;font-size:.98rem;color:var(--ink);
+            padding:6px 2px;margin-bottom:10px;text-align:center;outline:none;transition:border-color .3s;
         }
         .q-input:focus{border-bottom-color:var(--ink)}
-        .q-input::placeholder{color:rgba(44,37,30,.25);font-size:.9rem}
+        .q-input::placeholder{color:rgba(44,37,30,.25);font-size:.88rem}
+
+        /* Inspiration Chips */
+        .q-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;width:92%;margin-bottom:12px}
+        .q-chip{
+            background:rgba(44,37,30,.06);border:1px solid rgba(44,37,30,.12);
+            color:var(--ink);font-size:.68rem;padding:3px 8px;border-radius:12px;
+            cursor:pointer;transition:all .2s;letter-spacing:.5px;
+        }
+        .q-chip:hover,.q-chip:active{background:rgba(44,37,30,.14);border-color:var(--ink);transform:scale(.97)}
 
         /* ====== Answer State Content ====== */
         .a-label{font-size:.55rem;letter-spacing:3px;color:var(--ink2);margin-bottom:3px;margin-top:8px}
@@ -207,9 +216,20 @@
         .album-img{width:100%;height:auto;max-height:48vh;object-fit:contain;display:block;user-select:auto;-webkit-touch-callout:default}
         .album-acts{width:100%;margin-top:14px;gap:8px}
 
+        /* History Drawer Modal */
+        .hist-box{max-width:360px;max-height:80vh;display:flex;flex-direction:column}
+        .hist-list{flex:1;overflow-y:auto;margin:10px 0 16px;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+        .hist-item{background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.12);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .2s;text-align:left}
+        .hist-item:hover{border-color:rgba(212,175,55,.35);background:rgba(212,175,55,.05)}
+        .hist-q{font-size:.78rem;color:var(--gold-l);opacity:.8;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .hist-o{font-family:'Ma Shan Zheng',cursive;font-size:1.05rem;color:var(--gold);margin-bottom:4px}
+        .hist-r{font-size:.72rem;color:rgba(255,255,255,.6);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .hist-time{font-size:.6rem;opacity:.35;margin-top:4px}
+        .hist-empty{text-align:center;padding:30px 10px;font-size:.8rem;opacity:.4;letter-spacing:1px}
+
         /* Responsive */
-        @media(max-width:380px){.book-spread{height:clamp(170px,32vh,280px)}.q-title{font-size:.85rem}.a-oracle{font-size:1.2rem}.a-interp{font-size:.75rem}}
-        @media(max-height:680px){.book-spread{height:clamp(170px,32vh,280px)}.cover-t{font-size:2rem}}
+        @media(max-width:380px){.book-spread{height:clamp(180px,34vh,290px)}.q-title{font-size:.85rem}.a-oracle{font-size:1.2rem}.a-interp{font-size:.75rem}}
+        @media(max-height:680px){.book-spread{height:clamp(180px,34vh,290px)}.cover-t{font-size:2rem}}
         @media(max-height:580px){.book-spread{height:clamp(160px,30vh,240px)}.cover-t{font-size:1.8rem}}
     </style>
 </head>
@@ -218,7 +238,10 @@
 <canvas id="particles"></canvas>
 
 <div class="top-bar">
-    <button class="icon-btn" id="settingsBtn" aria-label="设置">
+    <button class="icon-btn" id="historyBtn" aria-label="神谕足迹" title="神谕足迹">
+        <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+    </button>
+    <button class="icon-btn" id="settingsBtn" aria-label="设置" title="设置">
         <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.48.48 0 0 0 15.92 2h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L4.74 8.47c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
     </button>
 </div>
@@ -236,7 +259,7 @@
     </button>
 </div>
 
-<!-- BOOK SCENE (stays visible, internal state changes) -->
+<!-- BOOK SCENE -->
 <div class="scene" id="sceneBook">
     <div class="book-wrap">
         <div class="book-spread" id="bookSpread">
@@ -275,6 +298,15 @@
                     <div class="p-orn"><div class="orn-l"></div><div class="orn-d"></div><div class="orn-l"></div></div>
                     <h2 class="q-title">你心中的疑问是什么？</h2>
                     <input type="text" id="qInput" class="q-input" placeholder="写下你的问题..." autocomplete="off" enterkeyhint="send">
+                    
+                    <!-- 灵感提示胶囊 -->
+                    <div class="q-chips" id="qChips">
+                        <span class="q-chip" data-q="我未来的路该怎么走？">未来的路</span>
+                        <span class="q-chip" data-q="当下的迷茫何时能消散？">面对迷茫</span>
+                        <span class="q-chip" data-q="是否应该勇敢迈出这一步？">勇敢迈出</span>
+                        <span class="q-chip" data-q="我是否应该放下心中的执念？">放下执念</span>
+                    </div>
+
                     <button class="btn btn-ink btn-sm" id="askBtn">
                         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                         寻找答案
@@ -299,7 +331,7 @@
             <!-- Loading overlay -->
             <div class="flip-loading">
                 <div class="flip-spinner"></div>
-                <p class="flip-text">书页翻动中...</p>
+                <p class="flip-text">命运之书翻动中...</p>
             </div>
         </div>
 
@@ -338,7 +370,7 @@
     <div class="modal-box">
         <button class="m-close" id="sClose"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
         <h2 class="modal-t">神秘设置</h2>
-        <div><label class="form-lb" for="apiKeyIn">MiniMax API Key（用于AI解读）</label><input type="password" id="apiKeyIn" class="form-in" placeholder="输入您的 API Key"></div>
+        <div><label class="form-lb" for="apiKeyIn">MiniMax API Key（用于AI解读，可选）</label><input type="password" id="apiKeyIn" class="form-in" placeholder="默认使用服务端安全 Key"></div>
         <div class="err" id="sErr"></div>
         <div class="m-acts"><button class="btn btn-ghost" id="sCancel">取消</button><button class="btn" id="sSave">保存</button></div>
     </div>
@@ -367,7 +399,23 @@
     </div>
 </div>
 
+<!-- History Drawer Modal -->
+<div class="modal" id="histModal">
+    <div class="modal-box hist-box">
+        <button class="m-close" id="histClose" aria-label="关闭"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <h2 class="modal-t" style="margin-bottom:12px">神谕足迹</h2>
+        <div class="hist-list" id="histList">
+            <!-- 动态渲染历史记录 -->
+        </div>
+        <div class="m-acts" style="margin-top:0">
+            <button class="btn btn-ghost btn-sm" id="histClearBtn">清空足迹</button>
+            <button class="btn btn-sm" id="histDoneBtn">关闭</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// 200 条经典神谕库（前端兜底与采样）
 const ORACLE=[
     "是的","不是","也许吧","当然可以","绝对不行","再等等","时候未到","马上就会发生","不要犹豫","需要更多耐心",
     "相信你的直觉","换个方向试试","坚持下去","放手吧","顺其自然","这是最好的选择","你需要休息","勇敢一点","不要害怕改变","答案就在你心中",
@@ -389,6 +437,16 @@ const ORACLE=[
     "一切都会好的","最坏的已经过去","好运正在路上","你值得拥有","相信奇迹"
 ];
 
+// 标准 Fisher-Yates (Knuth) 洗牌算法
+function fisherYatesShuffle(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
 // Particles
 const cvs=document.getElementById('particles'),cx=cvs.getContext('2d');let parts=[],seeking=false;
 function resC(){cvs.width=innerWidth;cvs.height=innerHeight}
@@ -407,9 +465,46 @@ document.addEventListener('DOMContentLoaded',()=>{
     const leftIn=$('leftInput'),leftAns=$('leftAnswer'),rightIn=$('rightInput'),rightAns=$('rightAnswer');
     const aQ=$('aQ'),aO=$('aO'),aI=$('aI'),actions=$('bookActions');
 
-    // Sound
+    // Audio Context (支持 iOS 预热与解锁)
     let actx;
-    function chime(){try{if(!actx)actx=new(AudioContext||webkitAudioContext)();if(actx.state==='suspended')actx.resume();const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.setValueAtTime(660,actx.currentTime);o.frequency.exponentialRampToValueAtTime(1320,actx.currentTime+1.5);g.gain.setValueAtTime(0,actx.currentTime);g.gain.linearRampToValueAtTime(.06,actx.currentTime+.05);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+2);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+2)}catch(e){}}
+    function initAudioContext(){
+        try{
+            if(!actx){
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if(AudioCtx) actx = new AudioCtx();
+            }
+            if(actx && actx.state==='suspended'){
+                actx.resume();
+            }
+        }catch(e){}
+    }
+
+    function chime(){
+        try{
+            initAudioContext();
+            if(!actx) return;
+            const o=actx.createOscillator(),g=actx.createGain();
+            o.type='sine';
+            o.frequency.setValueAtTime(660,actx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(1320,actx.currentTime+1.5);
+            g.gain.setValueAtTime(0,actx.currentTime);
+            g.gain.linearRampToValueAtTime(.06,actx.currentTime+.05);
+            g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+2);
+            o.connect(g);
+            g.connect(actx.destination);
+            o.start();
+            o.stop(actx.currentTime+2);
+        }catch(e){}
+    }
+
+    // 触觉振动反馈
+    function triggerHaptic(pattern = [15, 30, 15]){
+        try {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        } catch(e) {}
+    }
 
     function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
 
@@ -422,17 +517,41 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     // Cover → Book
     $('openBtn').onclick=()=>{
+        initAudioContext();
+        triggerHaptic(20);
         showBookState('input');
         switchScene('Book');
         setTimeout(()=>qInput.focus(),400);
     };
 
+    // 灵感提示胶囊点击填充
+    $('qChips').addEventListener('click', (e)=>{
+        const chip = e.target.closest('.q-chip');
+        if(chip && chip.dataset.q){
+            qInput.value = chip.dataset.q;
+            triggerHaptic(10);
+            qInput.focus();
+        }
+    });
+
     // Ask
-    $('askBtn').onclick=handleAsk;
-    qInput.onkeypress=e=>{if(e.key==='Enter')handleAsk()};
+    $('askBtn').onclick=()=>{
+        initAudioContext();
+        handleAsk();
+    };
+
+    // 修复输入法回车问题：采用 keydown 并过滤 isComposing
+    qInput.onkeydown=e=>{
+        if(e.isComposing || e.keyCode === 229) return;
+        if(e.key==='Enter'){
+            initAudioContext();
+            handleAsk();
+        }
+    };
 
     // Again
     $('againBtn').onclick=()=>{
+        triggerHaptic(15);
         qInput.value='';aO.textContent='';aI.innerHTML='';aQ.textContent='';
         showBookState('input');
         setTimeout(()=>qInput.focus(),300);
@@ -449,6 +568,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     // Export
     $('exportBtn').onclick=async()=>{
+        triggerHaptic(15);
         $('ecQ').textContent=aQ.textContent;$('ecO').textContent=aO.textContent;$('ecI').textContent=aI.textContent;
         const btn=$('exportBtn');btn.style.pointerEvents='none';btn.style.opacity='.4';
         try{
@@ -463,13 +583,11 @@ document.addEventListener('DOMContentLoaded',()=>{
                 currentCardFile=new File([b],fileName,{type:'image/png'});
                 const u=URL.createObjectURL(b);
 
-                // 手机端：支持直接写入相册或引导长按保存
                 if(isMobileDevice()){
                     const albumModal=$('albumModal');
                     const albumImg=$('albumImg');
                     albumImg.src=u;
 
-                    // 优先尝试 Web Share API 写入系统相册 (iOS/Android)
                     if(navigator.canShare && navigator.canShare({files:[currentCardFile]})){
                         try{
                             await navigator.share({
@@ -486,11 +604,9 @@ document.addEventListener('DOMContentLoaded',()=>{
                         }
                     }
 
-                    // 弹出相册保存指引弹窗（长按保存至相册）
                     albumModal.classList.add('active');
                     toast('已生成卡片，长按即可保存到相册');
                 }else{
-                    // PC 端：直接触发下载保存
                     const a=document.createElement('a');
                     a.href=u;
                     a.download=fileName;
@@ -528,6 +644,75 @@ document.addEventListener('DOMContentLoaded',()=>{
         }
     };
 
+    // 神谕历史记录管理 (Divination History)
+    const STORAGE_KEY = 'ANSWER_BOOK_HISTORY';
+    function getHistoryList(){
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        } catch(e) {
+            return [];
+        }
+    }
+    function saveHistoryItem(item){
+        const list = getHistoryList();
+        list.unshift(item);
+        if(list.length > 20) list.pop(); // 最多保存 20 条
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        } catch(e) {}
+    }
+    function renderHistoryList(){
+        const list = getHistoryList();
+        const container = $('histList');
+        if(!list.length){
+            container.innerHTML = '<div class="hist-empty">暂无神谕足迹<br>在书中写下你的问题吧</div>';
+            return;
+        }
+        container.innerHTML = list.map((item, idx) => `
+            <div class="hist-item" data-idx="${idx}">
+                <div class="hist-q">问：${escapeHtml(item.question)}</div>
+                <div class="hist-o">「${escapeHtml(item.oracle)}」</div>
+                <div class="hist-r">${escapeHtml(item.reading)}</div>
+                <div class="hist-time">${new Date(item.time).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+        `).join('');
+    }
+    function escapeHtml(str){
+        return (str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    const histMod = $('histModal');
+    function openHistory(){
+        renderHistoryList();
+        histMod.classList.add('active');
+    }
+    function closeHistory(){histMod.classList.remove('active')}
+    $('historyBtn').onclick=openHistory;
+    $('histClose').onclick=closeHistory;
+    $('histDoneBtn').onclick=closeHistory;
+    histMod.onclick=e=>{if(e.target===histMod)closeHistory()};
+    $('histClearBtn').onclick=()=>{
+        localStorage.removeItem(STORAGE_KEY);
+        renderHistoryList();
+        toast('足迹已清空');
+    };
+    // 点击历史条目直接展示在书本中
+    $('histList').onclick=(e)=>{
+        const itemEl = e.target.closest('.hist-item');
+        if(!itemEl) return;
+        const idx = parseInt(itemEl.dataset.idx, 10);
+        const list = getHistoryList();
+        const item = list[idx];
+        if(item){
+            aQ.textContent = item.question;
+            aO.textContent = item.oracle;
+            aI.textContent = item.reading;
+            showBookState('answer');
+            closeHistory();
+            switchScene('Book');
+        }
+    };
+
     const DEFAULT_KEY = "";
     function getKey(){
         return localStorage.getItem('MINIMAX_API_KEY') || DEFAULT_KEY;
@@ -539,7 +724,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     function closeS(){sM.classList.remove('active')}
     $('settingsBtn').onclick=openS;$('sClose').onclick=closeS;$('sCancel').onclick=closeS;
     sM.onclick=e=>{if(e.target===sM)closeS()};
-    $('sSave').onclick=()=>{const k=sK.value.trim();if(k){localStorage.setItem('MINIMAX_API_KEY',k);closeS();toast('已保存')}else{sE.textContent='API Key 不能为空';sE.style.display='block'}};
+    $('sSave').onclick=()=>{
+        const k=sK.value.trim();
+        localStorage.setItem('MINIMAX_API_KEY',k);
+        closeS();
+        toast(k ? '已保存自定义 Key' : '已恢复默认服务设置');
+    };
 
     // Main flow
     async function handleAsk(){
@@ -567,29 +757,53 @@ document.addEventListener('DOMContentLoaded',()=>{
             aO.textContent=result.oracle;
             showBookState('answer');
             chime();
+            triggerHaptic([30, 50, 30]);
             typewriter(aI,result.reading);
+
+            // 保存到神谕足迹
+            saveHistoryItem({
+                question: q,
+                oracle: result.oracle,
+                reading: result.reading,
+                intent: result.intent || '',
+                time: Date.now()
+            });
         }catch(e){
             console.error('API Error:',e);
             book.classList.remove('seeking');
             seeking=false;
             $('askBtn').disabled = false;
-            toast('网络感应微弱，已由命运随机揭晓');
-            const fallback=ORACLE[Math.floor(Math.random()*ORACLE.length)];
+            toast('命运在迷雾中低语，已随机显化启示');
+            const fallback=fisherYatesShuffle(ORACLE)[0];
+            const fallbackReading = '命运在薄雾中指引：前路已然在足下延展，静心感悟即可洞见真理。';
             aQ.textContent=q;aO.textContent=fallback;
-            aI.textContent='命运的低语在迷雾中回荡：心念即是方向，答案从未远离。';
+            aI.textContent=fallbackReading;
             showBookState('answer');
             chime();
+            triggerHaptic(20);
+
+            saveHistoryItem({
+                question: q,
+                oracle: fallback,
+                reading: fallbackReading,
+                intent: '降级启示',
+                time: Date.now()
+            });
         }
     }
 
     async function callAPI(key,q){
-        // 1. 优先调用服务端 API (/api/ask)，无需在浏览器暴露 Key
+        // 1. 优先调用服务端 API (/api/ask)，带有 25 秒 AbortController 超时保护
         try {
+            const srvController = new AbortController();
+            const srvTimeout = setTimeout(() => srvController.abort(), 25000);
             const resp = await fetch('/api/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: q })
+                body: JSON.stringify({ question: q }),
+                signal: srvController.signal
             });
+            clearTimeout(srvTimeout);
             if (resp.ok) {
                 const resData = await resp.json();
                 if (resData.success && resData.data && resData.data.oracle) {
@@ -597,17 +811,33 @@ document.addEventListener('DOMContentLoaded',()=>{
                 }
             }
         } catch (serverErr) {
-            console.log('服务端接口不可达，切换为前端直连模式...', serverErr);
+            console.log('服务端接口异常或不可达，切换为备用方案...', serverErr);
         }
 
-        // 2. 独立运行/非服务端环境时的前端兜底直连
+        // 2. 独立运行/非服务端环境时的前端直连（若配置了本地 Key）
         if (!key) {
-            throw new Error('未配置 API Key，且服务端不可用');
+            throw new Error('未配置 API Key，且服务端暂不可用');
         }
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
         try {
-            const sampledCandidates = [...ORACLE].sort(() => 0.5 - Math.random()).slice(0, 16);
+            const sampledCandidates = fisherYatesShuffle(ORACLE).slice(0, 16);
+            const systemPrompt = `你是《答案之书》中沉睡千年的神谕之灵。
+面对求问者的问题，你必须按照以下两步完成神谕推演：
+
+第一步【洞察意图】：
+深度洞察求问者问题的核心意图与心理底色（如：求证确认、迷茫抉择、突破顾虑、情感困惑、转折渴望、自我怀疑、静待时变等）。
+
+第二步【显化神谕与解读】：
+基于第一步洞察到的意图，显化最契合灵魂的神谕启示：
+1. oracle（神谕）：必须极简凝练，通常为2-4个汉字（如"大胆去做"、"听从直觉"、"放下执念"、"另辟蹊径"、"顺其自然"、"全力以赴"等）。可从参考库选择，亦可自然显化。
+2. reading（解读）：恰好2句话左右（50-85字），语气如古籍低语、塔罗启示。第一句直击当下意图与心境，第二句给出深邃超然的方向指引，语言优美玄妙，绝不直接重复神谕词。
+
+【参考灵感】：${sampledCandidates.join('、')}
+
+严格以JSON格式回复：
+{"intent":"核心意图分析","oracle":"简短神谕","reading":"恰好两句话的深邃解读"}`;
+
             const r=await fetch('https://api.minimaxi.com/v1/chat/completions',{
                 method:'POST',
                 headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
@@ -615,19 +845,10 @@ document.addEventListener('DOMContentLoaded',()=>{
                 body:JSON.stringify({
                     model:'MiniMax-Text-01',
                     messages:[
-                        {role:'system',content:`你是《答案之书》中沉睡千年的神谕之灵。
-此刻书页在命运微风中快速翻动，在灵性共鸣下停驻在以下启示之页中：
-【候选启示】：${sampledCandidates.join('、')}
-
-请根据命运的机缘与求问者心境：
-1. 从上述候选中选出当前显现的神谕（答案之书蕴含肯定、转念、行动、顿悟等多维机缘，切忌千篇一律推荐保守选项如“时候未到”或“再等等”）；
-2. 给出1-2句极具穿透力与灵性的玄妙解读，语气如古籍低语、塔罗启示，绝不重复神谕原文。
-
-严格以JSON格式回复（不要输出任何多余前缀或说明）：
-{"oracle":"选中的神谕","reading":"解读内容"}`},
-                        {role:'user',content:`我的问题：「${q}」`}
+                        {role:'system',content:systemPrompt},
+                        {role:'user',content:`求问者心声：「${q}」`}
                     ],
-                    temperature:.95
+                    temperature:.88
                 })
             });
             clearTimeout(timeoutId);
@@ -652,7 +873,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         }
         const om=text.match(/"oracle"\s*:\s*"([^"]+)"/);
         const rm=text.match(/"reading"\s*:\s*"([^"]+)"/);
-        if(om && rm) return {oracle:om[1], reading:rm[1]};
+        if(om && rm) return {oracle:om[1].trim(), reading:rm[1].trim()};
         throw new Error('Parse failed: '+text);
     }
 
