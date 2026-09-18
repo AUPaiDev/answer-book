@@ -197,6 +197,16 @@
         .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(16px);background:rgba(20,16,30,.9);border:1px solid var(--gold-d);color:var(--gold-l);padding:10px 20px;border-radius:20px;font-size:.8rem;letter-spacing:1px;z-index:200;opacity:0;transition:all .4s;pointer-events:none;backdrop-filter:blur(10px)}
         .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+        /* Album Modal */
+        .album-box{max-width:320px;padding:20px 16px;text-align:center;display:flex;flex-direction:column;align-items:center}
+        .album-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.3);color:var(--gold-l);font-size:.72rem;padding:3px 10px;border-radius:20px;margin-bottom:8px;letter-spacing:1px}
+        .album-title{font-size:1.05rem;color:var(--gold-l);margin-bottom:4px;letter-spacing:2px}
+        .album-tip{font-size:.75rem;color:rgba(235,228,210,.7);line-height:1.4;margin-bottom:12px}
+        .album-tip b{color:var(--gold);font-weight:600}
+        .album-img-wrap{width:100%;max-height:48vh;border-radius:6px;overflow:hidden;border:1px solid rgba(212,175,55,.25);box-shadow:0 8px 24px rgba(0,0,0,.6);background:#1a1526;display:flex;align-items:center;justify-content:center}
+        .album-img{width:100%;height:auto;max-height:48vh;object-fit:contain;display:block;user-select:auto;-webkit-touch-callout:default}
+        .album-acts{width:100%;margin-top:14px;gap:8px}
+
         /* Responsive */
         @media(max-width:380px){.book-spread{height:clamp(170px,32vh,280px)}.q-title{font-size:.85rem}.a-oracle{font-size:1.2rem}.a-interp{font-size:.75rem}}
         @media(max-height:680px){.book-spread{height:clamp(170px,32vh,280px)}.cover-t{font-size:2rem}}
@@ -334,6 +344,29 @@
     </div>
 </div>
 
+<!-- Mobile Save to Album Modal -->
+<div class="modal" id="albumModal">
+    <div class="modal-box album-box">
+        <button class="m-close" id="albumClose" aria-label="关闭"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <div class="album-badge">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            <span>手机相册保存</span>
+        </div>
+        <h3 class="album-title">长按卡片写入相册</h3>
+        <p class="album-tip">长按下方卡片，在弹出菜单中选择<b>「存储图像」</b>或<b>「保存到相册」</b></p>
+        <div class="album-img-wrap">
+            <img id="albumImg" alt="答案之书神谕卡片" class="album-img" />
+        </div>
+        <div class="m-acts album-acts">
+            <button class="btn btn-sm" id="albumShareBtn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                呼出系统保存
+            </button>
+            <button class="btn btn-ghost btn-sm" id="albumDoneBtn">完成</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const ORACLE=[
     "是的","不是","也许吧","当然可以","绝对不行","再等等","时候未到","马上就会发生","不要犹豫","需要更多耐心",
@@ -405,6 +438,15 @@ document.addEventListener('DOMContentLoaded',()=>{
         setTimeout(()=>qInput.focus(),300);
     };
 
+    // Device check: detect mobile phone or touch tablet
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent)
+            || (navigator.maxTouchPoints > 1 && window.innerWidth <= 1024);
+    }
+
+    let currentCardBlob = null;
+    let currentCardFile = null;
+
     // Export
     $('exportBtn').onclick=async()=>{
         $('ecQ').textContent=aQ.textContent;$('ecO').textContent=aO.textContent;$('ecI').textContent=aI.textContent;
@@ -413,8 +455,77 @@ document.addEventListener('DOMContentLoaded',()=>{
             const card=$('exportCard');card.style.left='0';card.style.zIndex='-1';
             const canvas=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,width:540,onclone:doc=>{const el=doc.getElementById('exportCard');el.style.left='0';el.style.position='relative'}});
             card.style.left='-9999px';card.style.zIndex='';
-            canvas.toBlob(b=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='答案之书_'+Date.now()+'.png';a.click();URL.revokeObjectURL(u);toast('图片已保存')},'image/png');
+
+            canvas.toBlob(async(b)=>{
+                if(!b){toast('生成图片失败');return}
+                currentCardBlob=b;
+                const fileName='答案之书_'+Date.now()+'.png';
+                currentCardFile=new File([b],fileName,{type:'image/png'});
+                const u=URL.createObjectURL(b);
+
+                // 手机端：支持直接写入相册或引导长按保存
+                if(isMobileDevice()){
+                    const albumModal=$('albumModal');
+                    const albumImg=$('albumImg');
+                    albumImg.src=u;
+
+                    // 优先尝试 Web Share API 写入系统相册 (iOS/Android)
+                    if(navigator.canShare && navigator.canShare({files:[currentCardFile]})){
+                        try{
+                            await navigator.share({
+                                files:[currentCardFile],
+                                title:'答案之书',
+                                text:'答案之书 · 神谕卡片'
+                            });
+                            toast('已调起系统相册保存');
+                            return;
+                        }catch(shareErr){
+                            if(shareErr.name!=='AbortError'){
+                                console.log('Share error, showing modal:',shareErr);
+                            }
+                        }
+                    }
+
+                    // 弹出相册保存指引弹窗（长按保存至相册）
+                    albumModal.classList.add('active');
+                    toast('已生成卡片，长按即可保存到相册');
+                }else{
+                    // PC 端：直接触发下载保存
+                    const a=document.createElement('a');
+                    a.href=u;
+                    a.download=fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(()=>URL.revokeObjectURL(u),3000);
+                    toast('图片已保存到本地');
+                }
+            },'image/png');
         }catch(e){console.error(e);toast('导出失败')}finally{btn.style.pointerEvents='';btn.style.opacity=''}
+    };
+
+    // Mobile Album Modal events
+    function closeAlbumModal(){$('albumModal').classList.remove('active')}
+    $('albumClose').onclick=closeAlbumModal;
+    $('albumDoneBtn').onclick=closeAlbumModal;
+    $('albumModal').onclick=e=>{if(e.target===$('albumModal'))closeAlbumModal()};
+    $('albumShareBtn').onclick=async()=>{
+        if(currentCardFile && navigator.canShare && navigator.canShare({files:[currentCardFile]})){
+            try{
+                await navigator.share({
+                    files:[currentCardFile],
+                    title:'答案之书',
+                    text:'答案之书 · 神谕卡片'
+                });
+                toast('已调起系统保存');
+            }catch(e){
+                if(e.name!=='AbortError'){
+                    toast('请长按上方图片保存到相册');
+                }
+            }
+        }else{
+            toast('请长按上方图片，选择「保存到相册」');
+        }
     };
 
     const DEFAULT_KEY = "";
