@@ -33,35 +33,31 @@ loadEnv();
 const PORT = parseInt(process.env.PORT || '3900', 10);
 const getApiKey = () => process.env.MINIMAX_API_KEY || '';
 
-// 四大维度结构化神谕大词库（用于兜底降级、抽样与模型灵感注入）
-const ORACLE_MATRIX = {
-    "经典哲理": [
-        "时机尚未成熟，再等等看", "顺其自然，不要强求", "换一个角度，答案显而易见", "退一步，海阔天空",
-        "相信你的第一直觉", "命运自有最妥善的安排", "你心中其实早已有了答案", "静待时变，不急于此刻定夺",
-        "放下执念，前路豁然开朗", "大道至简，不必思虑过多", "专注眼前，莫问前程凶吉", "每一次转折都是最好的契机",
-        "看似弯路，实则是必经之途", "听从内心的召唤，勿随波逐流", "所有的等待都在孕育惊喜", "答案就在你走过的脚步里"
-    ],
-    "趣味整活": [
-        "洗洗睡吧，梦里啥都有", "建议直接躺平，保持神秘", "要不先吃顿好的压压惊", "少管闲事，保住发量要紧",
-        "听妈妈的话，准没错", "这把直接重开，问题不大", "你高兴就好，何必为难自己", "与其内耗自己，不如发疯外耗他人",
-        "先喝杯奶茶，烦恼减半", "今天宜摸鱼，不宜大动干戈", "反思自己？不如质疑世界", "遇事不决，量子力学"
-    ],
-    "垂直专属": [
-        "老板比你想得更糊涂", "这波稳赚，大胆推进", "建议立刻摸鱼，保存体力", "主动就会有故事，犹豫只会败北",
-        "保持距离，美往往产生于神秘", "这局必赢，拿出你的底气", "及时止损，才是顶级自律", "打工人的命也是命，准点下班",
-        "勇敢表白，最差不过当兄弟", "拒绝画饼，真金白银才是王道", "多赚钱少动感情，格局瞬间打开", "先专注搞钱，爱情自然会来"
-    ],
-    "心理疗愈": [
-        "你已经做得足够好了", "允许自己偶尔搞砸一次", "休息也是前进必不可少的一部分", "别怕，最难熬的阶段已经过去",
-        "你值得世间所有的温柔与善意", "放过自己，今天的你已拼尽全力", "慢慢来，属于你的花期终会绽放", "不必完美，真实鲜活才最动人",
-        "爱自己，是一生浪漫的开始", "心若没有栖息的地方，到哪都是流浪", "万物皆有裂痕，那是光照进来的地方", "疲惫时就靠岸，世界随时等你归来"
-    ]
-};
-
-// 扁平化全部神谕列表（用于通用洗牌采样）
-const ALL_ORACLES = Object.entries(ORACLE_MATRIX).flatMap(([cat, list]) =>
-    list.map(oracle => ({ category: cat, oracle }))
-);
+// 多样态具有机锋、象征意蕴与随机视角的灵感神谕池（包含提醒、警诫、静待、逆向思考、顺水推舟）
+const ORACLE_INSPIRATIONS = [
+    "雾中行舟，不知彼岸远近",
+    "退潮之后，方见水底真石",
+    "镜中之人并非全部真相",
+    "水流自会绕过坚石",
+    "喧嚣之下的沉默更为震耳",
+    "云遮雾绕间，峰回路转处",
+    "月影朦胧，何须窥透水中花",
+    "潮起潮落自有时，莫问东风",
+    "风起于青萍之末，不可轻动",
+    "逆风而行，抑或顺流而散",
+    "看似坦途，暗流潜藏深处",
+    "种下一粒未知的种子",
+    "虚掩的门，无须用力撞击",
+    "弦绷得太紧，终难成曲调",
+    "远山如黛，近水难测深浅",
+    "火烛之下，阴影往往更浓",
+    "莫在空谷中追寻回声的真假",
+    "落叶飘零处，已见来年青葱",
+    "答案在问题提出的那一刻已生裂痕",
+    "不必点亮所有的夜灯",
+    "静听夜露滴落瓦檐的声响",
+    "未走之路，风景未必逊色"
+];
 
 // 标准 Fisher-Yates (Knuth) 洗牌算法
 function fisherYatesShuffle(arr) {
@@ -73,45 +69,45 @@ function fisherYatesShuffle(arr) {
     return copy;
 }
 
-function sampleOracleInspirations(count = 12) {
-    return fisherYatesShuffle(ALL_ORACLES).slice(0, count);
-}
+// 随机机锋视角生成器（避免千篇一律的安慰与鼓励倾向，赋予命运之书不可预测的随机性）
+const STOCHASTIC_ANGLES = [
+    "【警醒与审慎】：提醒求问者注意盲区与代价，莫被狂热或焦虑冲昏头脑",
+    "【留白与观望】：机缘未定，顺其自然，此刻不作定论即是最好定论",
+    "【逆向反思】：跳出提问本身的二元对立，从反方向或旁观者视角审视困局",
+    "【超然隐喻】：以自然造化为喻，给出深邃莫测、充满遐想的哲理点拨",
+    "【破局直行】：打破犹豫与幻象，唤醒本能直觉"
+];
 
-// 请求 MiniMax API：深度洞察语境意图，自适应四维风格，显化富有金句感的一句话神谕与两句精辟解读
+// 请求 MiniMax API
 async function callMiniMaxAPI(question, apiKey) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
-    const samples = sampleOracleInspirations(12);
-    const inspirationText = samples.map(s => `[${s.category}] ${s.oracle}`).join(' | ');
+    // 随机洗牌取样灵感与推演视角
+    const sampledInspirations = fisherYatesShuffle(ORACLE_INSPIRATIONS).slice(0, 8);
+    const randomAngle = fisherYatesShuffle(STOCHASTIC_ANGLES)[0];
 
-    const systemPrompt = `你是风靡全球的《答案之书》（The Book of Answers）的神谕之灵。
-《答案之书》的灵魂在于“万能回答与心理映射”，答案库涵盖四大维度：
-1. 【经典哲理】：中性留白、玄妙深邃（如：时机尚未成熟，再等等看 / 顺其自然，不要强求 / 换一个角度，答案显而易见）
-2. 【趣味整活】：冷幽默、网络网梗、毒舌但透彻（如：洗洗睡吧，梦里啥都有 / 建议直接躺平，保持神秘 / 要不先吃顿好的压压惊）
-3. 【垂直专属】：切中职场痛点、情感社交、搞钱现实（如：老板比你想得更糊涂 / 主动就会有故事，犹豫只会败北 / 及时止损才是顶级自律）
-4. 【心理疗愈】：温暖托底、缓解内耗、情绪价值（如：你已经做得足够好了 / 允许自己偶尔搞砸一次 / 休息也是前进必不可少的一部分）
+    const systemPrompt = `你是《答案之书》（The Book of Answers）中沉睡万载的神谕之灵。
+《答案之书》的最高魅力在于【不可捉摸的机锋、朦胧的留白与具有多义性的象征】。
+请牢记你的使命与规则：
+1. 你绝对不是迎合或安慰求问者的\"心灵鸡汤鼓励师\"，也不是具体的事务军师。你有时是迎头棒喝，有时是冷峻警惕，有时是顺其自然，有时是静观其变。必须具备随机性与多面性！
+2. 这一签推演命运偏向视角为：${randomAngle}。
+3. 【神谕（oracle）】：必须是一句含蓄留白、带有哲理或自然隐喻的一句话短句（约7-16字）。绝不要太直白或直白给行动命令（切忌输出“不要辞职”、“大胆表白”、“立刻摸鱼”等大白话），必须具备模棱两可的神秘机锋与多维解读空间，方能衬托出右侧解析的必要。
+4. 【解读（reading）】：恰好两句话（50-80字）。第一句点拨求问者心底深处未曾言明的真正执念、恐惧或盲点，第二句基于上方神谕的幽微意象，给出点到即止、回味无穷的玄妙点化，绝不重复神谕原句。
 
-面对求问者的心声，请按照以下两步推演：
-第一步【洞察意图与语境】：准确捕捉提问背后的心理动因、情绪底色及生活场景（职场打拼/情感纠结/自我怀疑/摆烂整活/人生抉择等）；
-第二步【显化神谕与解读】：
-1. category（维度）：从【经典哲理、趣味整活、垂直专属、心理疗愈】中选出最贴合该提问语境的一项；
-2. oracle（一句话神谕）：必须是一句朗朗上口、金句感极强的一句话短句（约6-16个字，可参考灵感库或灵性自创，不要只有两三个词，切忌千篇一律“时候未到”）；
-3. reading（解读）：恰好两句话左右（50-80字），第一句直击此刻心境与现实处境，第二句给出超然、幽默或温暖的行动方向，语言优美，绝不重复神谕原句。
+【灵感断章参考】：${sampledInspirations.join(' ｜ ')}
 
-【灵感参考库】：${inspirationText}
-
-严格以JSON格式输出，不要有任何多余文字或markdown代码块：
-{"category":"维度标签","intent":"意图心境洞察","oracle":"一句话神谕短句","reading":"恰好两句话的深邃解读"}`;
+严格以JSON格式输出，不要有任何多余文字或markdown标记：
+{"oracle":"具有朦胧机锋的一句话神谕","reading":"恰好两句点到即止的精辟解读"}`;
 
     try {
         const payload = {
             model: "MiniMax-Text-01",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `求问者心声：「${question}」` }
+                { role: "user", content: `求问者疑问：「${question}」` }
             ],
-            temperature: 0.88
+            temperature: 0.95
         };
 
         const res = await fetch("https://api.minimaxi.com/v1/chat/completions", {
@@ -142,10 +138,8 @@ async function callMiniMaxAPI(question, apiKey) {
                 const parsed = JSON.parse(rawContent.slice(start, end + 1));
                 if (parsed.oracle && parsed.reading) {
                     return {
-                        category: parsed.category ? String(parsed.category).trim() : '经典哲理',
                         oracle: String(parsed.oracle).trim(),
-                        reading: String(parsed.reading).trim(),
-                        intent: parsed.intent ? String(parsed.intent).trim() : ''
+                        reading: String(parsed.reading).trim()
                     };
                 }
             } catch (e) {}
@@ -153,13 +147,10 @@ async function callMiniMaxAPI(question, apiKey) {
 
         const om = rawContent.match(/"oracle"\s*:\s*"([^"]+)"/);
         const rm = rawContent.match(/"reading"\s*:\s*"([^"]+)"/);
-        const cm = rawContent.match(/"category"\s*:\s*"([^"]+)"/);
         if (om && rm) {
             return {
-                category: cm ? cm[1].trim() : '经典哲理',
                 oracle: om[1].trim(),
-                reading: rm[1].trim(),
-                intent: ''
+                reading: rm[1].trim()
             };
         }
 
@@ -191,7 +182,7 @@ const ALLOWED_STATIC_FILES = new Set([
     '/robots.txt'
 ]);
 
-// 简易内存速率限制（防刷 API，每 IP 每分钟最多 15 次请求）
+// 简易内存速率限制
 const ipRateMap = new Map();
 function checkRateLimit(ip) {
     const now = Date.now();
@@ -220,7 +211,7 @@ setInterval(() => {
 }, 60000);
 
 const server = http.createServer(async (req, res) => {
-    // 安全响应头 (OWASP 推荐)
+    // 安全响应头
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -310,7 +301,7 @@ const server = http.createServer(async (req, res) => {
 
                 console.log(`[Ask] 收到提问: "${question}"`);
                 const result = await callMiniMaxAPI(question, apiKey);
-                console.log(`[Ask] 维度:[${result.category}] 神谕:[${result.oracle}] - ${result.reading}`);
+                console.log(`[Ask] 神谕:[${result.oracle}] - ${result.reading}`);
 
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify({
@@ -319,16 +310,14 @@ const server = http.createServer(async (req, res) => {
                 }));
             } catch (err) {
                 console.error('[Ask] 接口调用异常:', err.message);
-                // 兜底降级方案：从多维答案库中随机抽取一条金句
-                const fallbackItem = fisherYatesShuffle(ALL_ORACLES)[0];
+                const fallbackOracle = fisherYatesShuffle(ORACLE_INSPIRATIONS)[0];
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify({
                     success: true,
                     fallback: true,
                     data: {
-                        category: fallbackItem.category,
-                        oracle: fallbackItem.oracle,
-                        reading: "命运在薄雾中轻声指引：前路已然在足下延展，静心感悟即可洞见真理。"
+                        oracle: fallbackOracle,
+                        reading: "你在意的是眼前的迷雾，还是心中的去向？顺应内心的潮汐，前路自会浮现。"
                     }
                 }));
             }
@@ -373,7 +362,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`========================================`);
-    console.log(`  📖 《答案之书》服务端启动成功 (四大文案维度支持)`);
+    console.log(`  📖 《答案之书》服务端启动成功 (机锋随机性与多维留白已生效)`);
     console.log(`  🌐 本地访问: http://localhost:${PORT}`);
     console.log(`  🔑 环境变量 MINIMAX_API_KEY: ${process.env.MINIMAX_API_KEY ? '已配置 (读取自环境变量)' : '未配置 (请在 .env 或环境变量中配置)'}`);
     console.log(`========================================`);
