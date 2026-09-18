@@ -55,10 +55,18 @@ const ORACLE_LIST = [
     "一切都会好的","最坏的已经过去","好运正在路上","你值得拥有","相信奇迹"
 ];
 
+// 随机抽取指定数量的不重复神谕（模拟书页随风翻动，避免大模型陷入单一模式）
+function sampleOracles(list, count = 16) {
+    const shuffled = [...list].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, list.length));
+}
+
 // 请求 MiniMax API
 async function callMiniMaxAPI(question, apiKey) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
+
+    const sampledCandidates = sampleOracles(ORACLE_LIST, 16);
 
     try {
         const payload = {
@@ -66,14 +74,15 @@ async function callMiniMaxAPI(question, apiKey) {
             messages: [
                 {
                     role: "system",
-                    content: `你是答案之书中沉睡千年的神谕之灵。用户提出问题后，你必须：
-1. 从以下神谕列表中，选出与问题最契合的一条（不要自创）；
-2. 用1-2句话给出玄妙解读，语气如远古预言、塔罗低语，绝不重复神谕原文。
+                    content: `你是《答案之书》中沉睡千年的神谕之灵。
+此刻书页在命运微风中快速翻动，在灵性共鸣下停驻在以下启示之页中：
+【候选启示】：${sampledCandidates.join('、')}
 
-神谕列表：
-${ORACLE_LIST.join('、')}
+请根据命运的机缘与求问者心境：
+1. 从上述候选中选出当前显现的神谕（答案之书蕴含肯定、转念、行动、顿悟等多维机缘，切忌千篇一律推荐保守选项如“时候未到”或“再等等”）；
+2. 给出1-2句极具穿透力与灵性的玄妙解读，语气如古籍低语、塔罗启示，绝不重复神谕原文。
 
-严格以JSON格式回复（不要输出markdown外的任何多余文字）：
+严格以JSON格式回复（不要输出任何多余前缀或说明）：
 {"oracle":"选中的神谕","reading":"解读内容"}`
                 },
                 {
@@ -81,7 +90,7 @@ ${ORACLE_LIST.join('、')}
                     content: `我的问题：「${question}」`
                 }
             ],
-            temperature: 0.8
+            temperature: 0.95
         };
 
         const res = await fetch("https://api.minimaxi.com/v1/chat/completions", {

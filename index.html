@@ -496,6 +496,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
         try {
+            const sampledCandidates = [...ORACLE].sort(() => 0.5 - Math.random()).slice(0, 16);
             const r=await fetch('https://api.minimaxi.com/v1/chat/completions',{
                 method:'POST',
                 headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
@@ -503,18 +504,19 @@ document.addEventListener('DOMContentLoaded',()=>{
                 body:JSON.stringify({
                     model:'MiniMax-Text-01',
                     messages:[
-                        {role:'system',content:`你是答案之书中沉睡千年的神谕之灵。用户提出问题后，你必须：
-1. 从以下神谕列表中，选出与问题最契合的一条（不要自创）；
-2. 用1-2句话给出玄妙解读，语气如远古预言、塔罗低语，绝不重复神谕原文。
+                        {role:'system',content:`你是《答案之书》中沉睡千年的神谕之灵。
+此刻书页在命运微风中快速翻动，在灵性共鸣下停驻在以下启示之页中：
+【候选启示】：${sampledCandidates.join('、')}
 
-神谕列表：
-${ORACLE.join('、')}
+请根据命运的机缘与求问者心境：
+1. 从上述候选中选出当前显现的神谕（答案之书蕴含肯定、转念、行动、顿悟等多维机缘，切忌千篇一律推荐保守选项如“时候未到”或“再等等”）；
+2. 给出1-2句极具穿透力与灵性的玄妙解读，语气如古籍低语、塔罗启示，绝不重复神谕原文。
 
-严格以JSON格式回复（不要输出其他内容）：
+严格以JSON格式回复（不要输出任何多余前缀或说明）：
 {"oracle":"选中的神谕","reading":"解读内容"}`},
                         {role:'user',content:`我的问题：「${q}」`}
                     ],
-                    temperature:.8
+                    temperature:.95
                 })
             });
             clearTimeout(timeoutId);
