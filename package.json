@@ -1,0 +1,18 @@
+{
+  "name": "answer-book",
+  "version": "1.0.0",
+  "description": "The Book of Answers - AI Oracle Web Service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --check server.js"
+  },
+  "keywords": [
+    "answer-book",
+    "oracle",
+    "minimax",
+    "ai"
+  ],
+  "author": "AUPaiDev",
+  "license": "MIT"
+}

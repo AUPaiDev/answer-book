@@ -1,0 +1,11 @@
+services:
+  answer-book:
+    image: ghcr.io/aupaidev/answer-book:latest
+    container_name: answer-book
+    restart: unless-stopped
+    ports:
+      - "3003:3900"
+    environment:
+      - PORT=3900
+      - NODE_ENV=production
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>答案之书 - 寻找你的答案</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231a1025%22 width=%22100%22 height=%22100%22 rx=%2210%22/><path d=%22M30 20h40c3 0 5 2 5 5v50c0 3-2 5-5 5H30c-3 0-5-2-5-5V25c0-3 2-5 5-5z%22 fill=%22%23d4af37%22 opacity=%220.9%22/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root{
+            --bg:#06070f;--bg2:#0e0818;
+            --gold:#d4af37;--gold-l:#f3e5ab;--gold-d:rgba(212,175,55,.35);
+            --pl:#f6efe0;--pr:#f1e8d4;--pe:#e2d5b8;
+            --ink:#2c251e;--ink2:rgba(44,37,30,.5);
+        }
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+        body,html{height:100%;height:100dvh;width:100%;overflow:hidden;font-family:'Noto Serif SC',serif;background:var(--bg);color:var(--gold)}
+
+        /* BG */
+        .bg{position:fixed;inset:0;pointer-events:none}
+        .bg1{z-index:0;background:radial-gradient(ellipse at 30% 20%,rgba(80,40,140,.18),transparent 55%),radial-gradient(ellipse at 70% 80%,rgba(40,20,100,.12),transparent 55%),radial-gradient(ellipse,var(--bg2),var(--bg))}
+        .bg2{z-index:1;background:url('book-bg.jpg') center/cover no-repeat;opacity:.22;filter:blur(3px) saturate(.8)}
+        .bg3{z-index:2;background:radial-gradient(ellipse,transparent 25%,var(--bg) 80%)}
+        #particles{position:fixed;inset:0;z-index:3;pointer-events:none}
+
+        /* Top bar */
+        .top-bar{position:fixed;top:0;right:0;z-index:50;padding:max(env(safe-area-inset-top,10px),10px) 14px 0}
+        .icon-btn{background:rgba(212,175,55,.06);border:1px solid rgba(212,175,55,.2);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;backdrop-filter:blur(10px)}
+        .icon-btn:active{transform:scale(.9)}
+        .icon-btn svg{width:16px;height:16px;fill:var(--gold);opacity:.6}
+
+        /* Scenes */
+        .scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 10px max(env(safe-area-inset-bottom,12px),12px);opacity:0;visibility:hidden;transition:opacity .7s,visibility 0s .7s;pointer-events:none}
+        .scene.active{opacity:1;visibility:visible;transition:opacity .7s,visibility 0s;pointer-events:auto}
+
+        /* Cover */
+        .orn{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+        .orn-l{width:32px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+        .orn-d{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);box-shadow:0 0 6px var(--gold-d)}
+        .cover-t{font-family:'Ma Shan Zheng',cursive;font-size:clamp(2.4rem,9vw,3.6rem);text-align:center;text-shadow:0 0 18px rgba(212,175,55,.4);letter-spacing:8px;margin-bottom:4px}
+        .cover-s{font-size:.75rem;letter-spacing:5px;opacity:.35;margin-bottom:40px;text-transform:uppercase}
+
+        /* Buttons */
+        .btn{position:relative;background:transparent;border:1px solid var(--gold);color:var(--gold);padding:11px 28px;font-size:.92rem;font-family:'Noto Serif SC',serif;border-radius:24px;cursor:pointer;transition:all .3s;min-height:42px;display:inline-flex;align-items:center;gap:7px}
+        .btn svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
+        .btn:active{transform:scale(.95)}
+        .btn-glow{background:linear-gradient(135deg,rgba(212,175,55,.1),rgba(212,175,55,.03));box-shadow:0 0 12px rgba(212,175,55,.1);animation:pulse 3s ease-in-out infinite}
+        @keyframes pulse{0%,100%{box-shadow:0 0 12px rgba(212,175,55,.1)}50%{box-shadow:0 0 22px rgba(212,175,55,.28)}}
+        .btn-ink{border-color:var(--ink);color:var(--ink);box-shadow:none;animation:none;background:rgba(44,37,30,.04)}
+        .btn-ink svg{fill:var(--ink)}
+        .btn-ghost{border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.35)}
+        .btn-sm{padding:9px 20px;font-size:.82rem;min-height:36px;border-radius:20px}
+
+        /* ====== Book Spread ====== */
+        .book-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+        .book-spread{
+            display:flex;position:relative;
+            width:clamp(290px,90vw,640px);
+            height:clamp(190px,34vh,340px);
+            filter:drop-shadow(0 6px 30px rgba(0,0,0,.55)) drop-shadow(0 0 50px rgba(212,175,55,.05));
+            transition:box-shadow .5s;
+        }
+        .book-page{
+            flex:1;min-width:0;position:relative;overflow:hidden;
+            display:flex;flex-direction:column;align-items:center;
+        }
+        .book-page::after{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");pointer-events:none}
+        .pg-l{background:linear-gradient(to right,var(--pl) 0%,var(--pl) 85%,var(--pe) 100%);border-radius:10px 0 0 10px;box-shadow:inset -3px 0 10px rgba(0,0,0,.07)}
+        .pg-r{background:linear-gradient(to left,var(--pr) 0%,var(--pr) 85%,var(--pe) 100%);border-radius:0 10px 10px 0;box-shadow:inset 3px 0 10px rgba(0,0,0,.07)}
+        .book-spine{width:3px;flex-shrink:0;background:linear-gradient(to bottom,var(--pe),rgba(180,160,130,.5),var(--pe));box-shadow:0 0 6px rgba(0,0,0,.12);z-index:2}
+
+        /* Page content layers */
+        .pg-layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:16px 12px;transition:opacity .5s;overflow-y:auto;scrollbar-width:none}
+        .pg-layer::-webkit-scrollbar{display:none}
+        .pg-layer.hidden{opacity:0;pointer-events:none}
+
+        /* Corner ornaments */
+        .pc{position:absolute;width:18px;height:18px;opacity:.12;z-index:5;pointer-events:none}
+        .pc svg{width:100%;height:100%;stroke:var(--ink);fill:none;stroke-width:1.2}
+        .pc.tl{top:8px;left:10px}.pc.tr{top:8px;right:8px;transform:scaleX(-1)}.pc.bl{bottom:8px;left:10px;transform:scaleY(-1)}.pc.br{bottom:8px;right:8px;transform:scale(-1)}
+
+        /* Flip overlay (for page turn animation during seeking) */
+        .flip-overlay{
+            position:absolute;inset:0;z-index:10;pointer-events:none;
+            display:flex;align-items:center;justify-content:center;
+            opacity:0;transition:opacity .4s;
+        }
+        .book-spread.seeking .flip-overlay{opacity:1}
+
+        .flip-sheet{
+            position:absolute;top:2%;right:50%;width:49%;height:96%;
+            background:linear-gradient(to left,var(--pl),var(--pe));
+            border-radius:2px 0 0 2px;
+            transform-origin:right center;
+            box-shadow:-2px 0 8px rgba(0,0,0,.1);
+            opacity:0;
+            pointer-events:none;
+        }
+        .book-spread.seeking .flip-sheet{
+            animation:flipPage 1.2s ease-in-out infinite;
+        }
+        .book-spread.seeking .flip-sheet:nth-child(2){animation-delay:.4s}
+        .book-spread.seeking .flip-sheet:nth-child(3){animation-delay:.8s}
+
+        @keyframes flipPage{
+            0%{transform:perspective(600px) rotateY(0deg);opacity:0}
+            10%{opacity:.8}
+            50%{transform:perspective(600px) rotateY(-160deg);opacity:.6}
+            90%{opacity:.2}
+            100%{transform:perspective(600px) rotateY(-180deg);opacity:0}
+        }
+
+        .flip-loading{
+            position:absolute;inset:0;z-index:15;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            background:rgba(244,236,216,.65);backdrop-filter:blur(2px);
+            opacity:0;transition:opacity .4s;border-radius:10px;
+            pointer-events:none;
+        }
+        .book-spread.seeking .flip-loading{opacity:1;pointer-events:auto}
+        .flip-spinner{width:28px;height:28px;margin-bottom:10px;border:2px solid rgba(44,37,30,.1);border-top-color:var(--ink);border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .flip-text{font-size:.78rem;color:var(--ink2);letter-spacing:2px;text-align:center;animation:breathe 2s ease-in-out infinite}
+        @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.9}}
+
+        /* Book glow when seeking */
+        .book-spread.seeking{filter:drop-shadow(0 6px 30px rgba(0,0,0,.55)) drop-shadow(0 0 80px rgba(212,175,55,.2))}
+
+        /* ====== Question State Content ====== */
+        .q-icon{margin-top:auto;margin-bottom:8px;opacity:.15}
+        .q-icon svg{width:28px;height:28px;stroke:var(--ink);fill:none;stroke-width:1.2}
+        .q-guide{font-size:.72rem;color:var(--ink2);text-align:center;line-height:1.6;letter-spacing:1px;margin-bottom:auto}
+        .q-title{font-size:.95rem;font-weight:700;color:var(--ink);text-align:center;margin-bottom:14px;margin-top:auto;letter-spacing:1px}
+        .q-input{
+            width:90%;background:transparent;border:none;border-bottom:1.5px solid rgba(44,37,30,.18);
+            font-family:'Noto Serif SC',serif;font-size:1rem;color:var(--ink);
+            padding:6px 2px;margin-bottom:16px;text-align:center;outline:none;transition:border-color .3s;
+        }
+        .q-input:focus{border-bottom-color:var(--ink)}
+        .q-input::placeholder{color:rgba(44,37,30,.25);font-size:.9rem}
+
+        /* ====== Answer State Content ====== */
+        .a-label{font-size:.55rem;letter-spacing:3px;color:var(--ink2);margin-bottom:3px;margin-top:8px}
+        .a-question{font-size:.78rem;color:var(--ink);text-align:center;line-height:1.5;font-style:italic;opacity:.6;width:88%;margin-bottom:8px;word-break:break-all}
+        .a-divider{width:40%;height:1px;background:linear-gradient(90deg,transparent,rgba(44,37,30,.25),transparent);margin:6px 0;flex-shrink:0}
+        .a-oracle{font-family:'Ma Shan Zheng',cursive;font-size:clamp(1.3rem,4.5vw,2rem);color:var(--ink);text-align:center;line-height:1.3;margin-bottom:6px}
+        .a-ilabel{font-size:.55rem;color:var(--ink2);letter-spacing:3px;margin-bottom:6px;margin-top:8px}
+        .a-interp{font-size:.8rem;line-height:1.75;text-align:justify;color:var(--ink);width:88%}
+        .p-orn{display:flex;align-items:center;gap:6px;margin-bottom:10px;margin-top:4px;opacity:.2}
+        .p-orn .orn-l{background:linear-gradient(90deg,transparent,var(--ink),transparent)}
+        .p-orn .orn-d{background:var(--ink);box-shadow:none}
+
+        /* Action buttons row */
+        .book-actions{display:flex;gap:10px;opacity:0;transition:opacity .5s;pointer-events:none}
+        .book-actions.show{opacity:1;pointer-events:auto}
+
+        /* Typewriter */
+        .tw{opacity:0;animation:twIn .06s forwards}
+        @keyframes twIn{to{opacity:1}}
+
+        /* ====== Export Card ====== */
+        .export-card{position:fixed;left:-9999px;top:0;width:540px;background:linear-gradient(160deg,#0c0a18,#120e22 40%,#0a0814);padding:44px 36px;font-family:'Noto Serif SC',serif;color:var(--gold)}
+        .ec-hdr{text-align:center;margin-bottom:28px}
+        .ec-t{font-family:'Ma Shan Zheng',cursive;font-size:2rem;letter-spacing:6px;text-shadow:0 0 12px rgba(212,175,55,.35);margin-bottom:3px}
+        .ec-s{font-size:.65rem;letter-spacing:5px;opacity:.3;text-transform:uppercase}
+        .ec-o{display:flex;align-items:center;justify-content:center;gap:10px;margin:20px 0}
+        .ec-ol{width:50px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),transparent)}
+        .ec-od{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);opacity:.5}
+        .ec-sec{margin-bottom:20px}
+        .ec-lb{font-size:.65rem;letter-spacing:4px;opacity:.4;margin-bottom:8px}
+        .ec-q{font-size:.95rem;line-height:1.6;opacity:.65;font-style:italic;text-align:center}
+        .ec-or{font-family:'Ma Shan Zheng',cursive;font-size:2.2rem;text-align:center;text-shadow:0 0 10px rgba(212,175,55,.25);line-height:1.3}
+        .ec-ip{font-size:.9rem;line-height:1.9;text-align:justify;opacity:.8}
+        .ec-ft{text-align:center;margin-top:24px;opacity:.18;font-size:.6rem;letter-spacing:3px}
+
+        /* Modal */
+        .modal{position:fixed;inset:0;background:rgba(6,7,15,.88);backdrop-filter:blur(8px);z-index:100;display:flex;justify-content:center;align-items:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
+        .modal.active{opacity:1;visibility:visible;transition:opacity .3s,visibility 0s}
+        .modal-box{background:linear-gradient(145deg,#14101e,#0e0818);border:1px solid rgba(212,175,55,.18);border-radius:12px;padding:26px 22px;width:86%;max-width:340px;box-shadow:0 0 30px rgba(212,175,55,.06);position:relative}
+        .modal-t{font-size:1.1rem;margin-bottom:18px;text-align:center;letter-spacing:3px}
+        .form-lb{display:block;margin-bottom:6px;font-size:.78rem;color:var(--gold-l);opacity:.55}
+        .form-in{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.15);border-radius:7px;color:var(--gold);padding:10px 12px;font-family:monospace;font-size:.85rem;outline:none;transition:border-color .3s}
+        .form-in:focus{border-color:var(--gold)}
+        .m-acts{display:flex;gap:10px;margin-top:20px}
+        .m-acts .btn{flex:1;justify-content:center;padding:10px;font-size:.85rem}
+        .m-close{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;padding:4px}
+        .m-close svg{width:13px;height:13px;fill:var(--gold);opacity:.35;transition:opacity .3s}
+        .m-close:hover svg{opacity:1}
+        .err{color:#e85d5d;font-size:.78rem;margin-top:6px;text-align:center;display:none}
+
+        /* Toast */
+        .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(16px);background:rgba(20,16,30,.9);border:1px solid var(--gold-d);color:var(--gold-l);padding:10px 20px;border-radius:20px;font-size:.8rem;letter-spacing:1px;z-index:200;opacity:0;transition:all .4s;pointer-events:none;backdrop-filter:blur(10px)}
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+        /* Responsive */
+        @media(max-width:380px){.book-spread{height:clamp(170px,32vh,280px)}.q-title{font-size:.85rem}.a-oracle{font-size:1.2rem}.a-interp{font-size:.75rem}}
+        @media(max-height:680px){.book-spread{height:clamp(170px,32vh,280px)}.cover-t{font-size:2rem}}
+        @media(max-height:580px){.book-spread{height:clamp(160px,30vh,240px)}.cover-t{font-size:1.8rem}}
+    </style>
+</head>
+<body>
+<div class="bg bg1"></div><div class="bg bg2"></div><div class="bg bg3"></div>
+<canvas id="particles"></canvas>
+
+<div class="top-bar">
+    <button class="icon-btn" id="settingsBtn" aria-label="设置">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.48.48 0 0 0 15.92 2h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L4.74 8.47c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
+    </button>
+</div>
+
+<div style="position:relative;width:100%;height:100dvh">
+
+<!-- COVER -->
+<div class="scene active" id="sceneCover">
+    <div class="orn"><div class="orn-l"></div><div class="orn-d"></div><div class="orn-l"></div></div>
+    <h1 class="cover-t">答案之书</h1>
+    <p class="cover-s">Book of Answers</p>
+    <button class="btn btn-glow" id="openBtn">
+        <svg viewBox="0 0 24 24"><path d="M21 4H3a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1zM4 18V6h7v12H4zm16 0h-7V6h7v12z"/></svg>
+        翻开书页
+    </button>
+</div>
+
+<!-- BOOK SCENE (stays visible, internal state changes) -->
+<div class="scene" id="sceneBook">
+    <div class="book-wrap">
+        <div class="book-spread" id="bookSpread">
+            <!-- Left Page -->
+            <div class="book-page pg-l">
+                <div class="pc tl"><svg viewBox="0 0 18 18"><path d="M2 2v5c0 .6 0 1.2.6 1.8l6.6 6.6c.6.6 1.2.6 1.8.6h5"/></svg></div>
+                <div class="pc bl"><svg viewBox="0 0 18 18"><path d="M2 2v5c0 .6 0 1.2.6 1.8l6.6 6.6c.6.6 1.2.6 1.8.6h5"/></svg></div>
+
+                <!-- Input state -->
+                <div class="pg-layer" id="leftInput">
+                    <div class="q-icon" style="margin-top:auto">
+                        <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16"/><path d="M20 12v10M17 15c0-1.7 1.3-3 3-3s3 1.3 3 3c0 2-3 2.5-3 5"/><circle cx="20" cy="28" r="1.2" fill="currentColor" stroke="none"/></svg>
+                    </div>
+                    <p class="q-guide">在心中默念你的问题<br>虔诚地写下<br>等待命运的指引</p>
+                </div>
+
+                <!-- Answer state -->
+                <div class="pg-layer hidden" id="leftAnswer">
+                    <p class="a-label">- 你的问题 -</p>
+                    <p class="a-question" id="aQ"></p>
+                    <div class="a-divider"></div>
+                    <p class="a-label">- 神 谕 -</p>
+                    <h3 class="a-oracle" id="aO"></h3>
+                </div>
+            </div>
+
+            <div class="book-spine"></div>
+
+            <!-- Right Page -->
+            <div class="book-page pg-r">
+                <div class="pc tr"><svg viewBox="0 0 18 18"><path d="M2 2v5c0 .6 0 1.2.6 1.8l6.6 6.6c.6.6 1.2.6 1.8.6h5"/></svg></div>
+                <div class="pc br"><svg viewBox="0 0 18 18"><path d="M2 2v5c0 .6 0 1.2.6 1.8l6.6 6.6c.6.6 1.2.6 1.8.6h5"/></svg></div>
+
+                <!-- Input state -->
+                <div class="pg-layer" id="rightInput" style="justify-content:center">
+                    <div class="p-orn"><div class="orn-l"></div><div class="orn-d"></div><div class="orn-l"></div></div>
+                    <h2 class="q-title">你心中的疑问是什么？</h2>
+                    <input type="text" id="qInput" class="q-input" placeholder="写下你的问题..." autocomplete="off" enterkeyhint="send">
+                    <button class="btn btn-ink btn-sm" id="askBtn">
+                        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        寻找答案
+                    </button>
+                </div>
+
+                <!-- Answer state -->
+                <div class="pg-layer hidden" id="rightAnswer">
+                    <div class="p-orn"><div class="orn-l"></div><div class="orn-d"></div><div class="orn-l"></div></div>
+                    <p class="a-ilabel">- 解 读 -</p>
+                    <div class="a-interp" id="aI"></div>
+                </div>
+            </div>
+
+            <!-- Flip animation sheets -->
+            <div class="flip-overlay">
+                <div class="flip-sheet"></div>
+                <div class="flip-sheet"></div>
+                <div class="flip-sheet"></div>
+            </div>
+
+            <!-- Loading overlay -->
+            <div class="flip-loading">
+                <div class="flip-spinner"></div>
+                <p class="flip-text">书页翻动中...</p>
+            </div>
+        </div>
+
+        <!-- Action buttons (shown after answer) -->
+        <div class="book-actions" id="bookActions">
+            <button class="btn btn-sm" id="exportBtn">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                保存图片
+            </button>
+            <button class="btn btn-sm" id="againBtn">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                再次询问
+            </button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Export Card -->
+<div class="export-card" id="exportCard">
+    <div class="ec-hdr"><div class="ec-t">答案之书</div><div class="ec-s">Book of Answers</div></div>
+    <div class="ec-o"><div class="ec-ol"></div><div class="ec-od"></div><div class="ec-ol"></div></div>
+    <div class="ec-sec" style="text-align:center"><div class="ec-lb">- 你的问题 -</div><div class="ec-q" id="ecQ"></div></div>
+    <div class="ec-o"><div class="ec-ol"></div><div class="ec-od"></div><div class="ec-ol"></div></div>
+    <div class="ec-sec" style="text-align:center"><div class="ec-lb">- 神 谕 -</div><div class="ec-or" id="ecO"></div></div>
+    <div class="ec-o"><div class="ec-ol"></div><div class="ec-od"></div><div class="ec-ol"></div></div>
+    <div class="ec-sec"><div class="ec-lb">- 解 读 -</div><div class="ec-ip" id="ecI"></div></div>
+    <div class="ec-ft">答案之书 / Book of Answers</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Settings Modal -->
+<div class="modal" id="sMod">
+    <div class="modal-box">
+        <button class="m-close" id="sClose"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <h2 class="modal-t">神秘设置</h2>
+        <div><label class="form-lb" for="apiKeyIn">MiniMax API Key（用于AI解读）</label><input type="password" id="apiKeyIn" class="form-in" placeholder="输入您的 API Key"></div>
+        <div class="err" id="sErr"></div>
+        <div class="m-acts"><button class="btn btn-ghost" id="sCancel">取消</button><button class="btn" id="sSave">保存</button></div>
+    </div>
+</div>
+
+<script>
+const ORACLE=[
+    "是的","不是","也许吧","当然可以","绝对不行","再等等","时候未到","马上就会发生","不要犹豫","需要更多耐心",
+    "相信你的直觉","换个方向试试","坚持下去","放手吧","顺其自然","这是最好的选择","你需要休息","勇敢一点","不要害怕改变","答案就在你心中",
+    "试试看吧","现在不是时候","命运自有安排","你已经知道答案了","再想想","毫无疑问","前方有惊喜","小心行事","大胆去做","保持冷静",
+    "这条路是对的","转机即将出现","你需要帮助","独自面对","分享你的想法","沉默是金","说出来","写下来","等到明天","今天就行动",
+    "深呼吸","微笑面对","接受现实","创造奇迹","简单就好","复杂的事简单做","听听朋友的建议","相信自己","不要回头","回头看看",
+    "这只是开始","终点就在前方","享受过程","专注当下","放眼未来","回忆过去的经验","打破常规","遵循传统","创新是关键","稳中求进",
+    "冒险一次","安全第一","倾听内心","理性分析","感性选择","两者都要","两者都不要","选第一个","选最后一个","随机选择",
+    "问问长辈","和朋友聊聊","独自思考","出去走走","静下心来","读一本书","看一场电影","听一首歌","画一幅画","写一封信",
+    "好事将近","贵人相助","自力更生","团队合作","单打独斗","时间会证明一切","不要浪费时间","慢慢来","加快脚步","停下来想想",
+    "你比想象中强大","承认自己的弱点","发挥你的优势","学习新技能","温故知新","改变策略","坚持原来的计划","灵活应变","未雨绸缪","船到桥头自然直",
+    "吃一堑长一智","三思而后行","果断决定","推迟决定","现在就决定","值得等待","不值得","非常值得","再给一次机会","到此为止",
+    "新的开始","完美的结局","未完待续","翻篇了","重新来过","你做得很好","还可以更好","已经足够了","永远不够","恰到好处",
+    "多一点","少一点","刚刚好","过犹不及","适可而止","天时地利人和","万事俱备","欠缺东风","一切就绪","还需准备",
+    "心想事成","事与愿违","塞翁失马","因祸得福","否极泰来","柳暗花明","峰回路转","水到渠成","功到自然成","欲速则不达",
+    "知足常乐","追求更多","珍惜当下","期待未来","释怀过去","爱自己","爱别人","被爱着","去表达","去感受",
+    "你是对的","你错了","没有对错","换个角度","站高一点看","细节决定成败","大局为重","抓大放小","面面俱到","有所取舍",
+    "勇往直前","以退为进","迂回前进","原地等待","换条路走","打开心扉","保护自己","拥抱变化","守护初心","随遇而安",
+    "一切都会好的","最坏的已经过去","好运正在路上","你值得拥有","相信奇迹"
+];
+
+// Particles
+const cvs=document.getElementById('particles'),cx=cvs.getContext('2d');let parts=[],seeking=false;
+function resC(){cvs.width=innerWidth;cvs.height=innerHeight}
+class P{constructor(){this.r()}r(){this.x=Math.random()*cvs.width;this.y=Math.random()*cvs.height;this.s=Math.random()*1.5+.2;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.ba=Math.random()*.3+.08;this.a=this.ba;this.ts=Math.random()*.003+.001;this.to=Math.random()*6.28;this.g=Math.random()>.2}u(){if(seeking){const dx=cvs.width/2-this.x,dy=cvs.height/2-this.y;this.x+=dx*.012+(Math.random()-.5)*3.5;this.y+=dy*.012+(Math.random()-.5)*3.5;this.a=Math.min(1,this.a+.03);this.s=Math.min(3,this.s+.02);if(Math.abs(dx)<20&&Math.abs(dy)<20)this.r()}else{this.x+=this.vx;this.y+=this.vy;this.a=this.ba+Math.sin(Date.now()*this.ts+this.to)*.2;if(this.x<-5||this.x>cvs.width+5)this.vx*=-1;if(this.y<-5||this.y>cvs.height+5)this.vy*=-1}}d(){const a=Math.max(0,this.a);cx.fillStyle=this.g?`rgba(212,175,55,${a})`:`rgba(195,185,225,${a*.45})`;cx.beginPath();cx.arc(this.x,this.y,this.s,0,6.28);cx.fill()}}
+function initP(){parts=[];for(let i=0,n=Math.min(Math.floor(innerWidth/8),110);i<n;i++)parts.push(new P())}
+function animP(){cx.clearRect(0,0,cvs.width,cvs.height);for(const p of parts){p.u();p.d()}requestAnimationFrame(animP)}
+addEventListener('resize',()=>{resC();initP()});resC();initP();animP();
+
+// App
+document.addEventListener('DOMContentLoaded',()=>{
+    const $=id=>document.getElementById(id);
+    const switchScene=(name)=>{for(const s of document.querySelectorAll('.scene'))s.classList.toggle('active',s.id==='scene'+name)};
+
+    // Elements
+    const book=$('bookSpread'),qInput=$('qInput');
+    const leftIn=$('leftInput'),leftAns=$('leftAnswer'),rightIn=$('rightInput'),rightAns=$('rightAnswer');
+    const aQ=$('aQ'),aO=$('aO'),aI=$('aI'),actions=$('bookActions');
+
+    // Sound
+    let actx;
+    function chime(){try{if(!actx)actx=new(AudioContext||webkitAudioContext)();if(actx.state==='suspended')actx.resume();const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.setValueAtTime(660,actx.currentTime);o.frequency.exponentialRampToValueAtTime(1320,actx.currentTime+1.5);g.gain.setValueAtTime(0,actx.currentTime);g.gain.linearRampToValueAtTime(.06,actx.currentTime+.05);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+2);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+2)}catch(e){}}
+
+    function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+
+    function showBookState(state){
+        const isInput=state==='input';
+        leftIn.classList.toggle('hidden',!isInput);leftAns.classList.toggle('hidden',isInput);
+        rightIn.classList.toggle('hidden',!isInput);rightAns.classList.toggle('hidden',isInput);
+        actions.classList.toggle('show',state==='answer');
+    }
+
+    // Cover → Book
+    $('openBtn').onclick=()=>{
+        showBookState('input');
+        switchScene('Book');
+        setTimeout(()=>qInput.focus(),400);
+    };
+
+    // Ask
+    $('askBtn').onclick=handleAsk;
+    qInput.onkeypress=e=>{if(e.key==='Enter')handleAsk()};
+
+    // Again
+    $('againBtn').onclick=()=>{
+        qInput.value='';aO.textContent='';aI.innerHTML='';aQ.textContent='';
+        showBookState('input');
+        setTimeout(()=>qInput.focus(),300);
+    };
+
+    // Export
+    $('exportBtn').onclick=async()=>{
+        $('ecQ').textContent=aQ.textContent;$('ecO').textContent=aO.textContent;$('ecI').textContent=aI.textContent;
+        const btn=$('exportBtn');btn.style.pointerEvents='none';btn.style.opacity='.4';
+        try{
+            const card=$('exportCard');card.style.left='0';card.style.zIndex='-1';
+            const canvas=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,width:540,onclone:doc=>{const el=doc.getElementById('exportCard');el.style.left='0';el.style.position='relative'}});
+            card.style.left='-9999px';card.style.zIndex='';
+            canvas.toBlob(b=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='答案之书_'+Date.now()+'.png';a.click();URL.revokeObjectURL(u);toast('图片已保存')},'image/png');
+        }catch(e){console.error(e);toast('导出失败')}finally{btn.style.pointerEvents='';btn.style.opacity=''}
+    };
+
+    const DEFAULT_KEY = "";
+    function getKey(){
+        return localStorage.getItem('MINIMAX_API_KEY') || DEFAULT_KEY;
+    }
+
+    // Settings
+    const sM=$('sMod'),sK=$('apiKeyIn'),sE=$('sErr');
+    function openS(){sK.value=localStorage.getItem('MINIMAX_API_KEY')||DEFAULT_KEY;sE.style.display='none';sM.classList.add('active')}
+    function closeS(){sM.classList.remove('active')}
+    $('settingsBtn').onclick=openS;$('sClose').onclick=closeS;$('sCancel').onclick=closeS;
+    sM.onclick=e=>{if(e.target===sM)closeS()};
+    $('sSave').onclick=()=>{const k=sK.value.trim();if(k){localStorage.setItem('MINIMAX_API_KEY',k);closeS();toast('已保存')}else{sE.textContent='API Key 不能为空';sE.style.display='block'}};
+
+    // Main flow
+    async function handleAsk(){
+        if(seeking) return;
+        let q=qInput.value.trim();
+        if(!q){
+            q='我未来的路该怎么走？';
+            qInput.value=q;
+        }
+        const key=getKey();
+
+        qInput.blur();
+        $('askBtn').disabled = true;
+        book.classList.add('seeking');
+        seeking=true;
+        actions.classList.remove('show');
+
+        try{
+            const result=await callAPI(key,q);
+            book.classList.remove('seeking');
+            seeking=false;
+            $('askBtn').disabled = false;
+
+            aQ.textContent=q;
+            aO.textContent=result.oracle;
+            showBookState('answer');
+            chime();
+            typewriter(aI,result.reading);
+        }catch(e){
+            console.error('API Error:',e);
+            book.classList.remove('seeking');
+            seeking=false;
+            $('askBtn').disabled = false;
+            toast('网络感应微弱，已由命运随机揭晓');
+            const fallback=ORACLE[Math.floor(Math.random()*ORACLE.length)];
+            aQ.textContent=q;aO.textContent=fallback;
+            aI.textContent='命运的低语在迷雾中回荡：心念即是方向，答案从未远离。';
+            showBookState('answer');
+            chime();
+        }
+    }
+
+    async function callAPI(key,q){
+        // 1. 优先调用服务端 API (/api/ask)，无需在浏览器暴露 Key
+        try {
+            const resp = await fetch('/api/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: q })
+            });
+            if (resp.ok) {
+                const resData = await resp.json();
+                if (resData.success && resData.data && resData.data.oracle) {
+                    return resData.data;
+                }
+            }
+        } catch (serverErr) {
+            console.log('服务端接口不可达，切换为前端直连模式...', serverErr);
+        }
+
+        // 2. 独立运行/非服务端环境时的前端兜底直连
+        if (!key) {
+            throw new Error('未配置 API Key，且服务端不可用');
+        }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        try {
+            const r=await fetch('https://api.minimaxi.com/v1/chat/completions',{
+                method:'POST',
+                headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+                signal: controller.signal,
+                body:JSON.stringify({
+                    model:'MiniMax-Text-01',
+                    messages:[
+                        {role:'system',content:`你是答案之书中沉睡千年的神谕之灵。用户提出问题后，你必须：
+1. 从以下神谕列表中，选出与问题最契合的一条（不要自创）；
+2. 用1-2句话给出玄妙解读，语气如远古预言、塔罗低语，绝不重复神谕原文。
+
+神谕列表：
+${ORACLE.join('、')}
+
+严格以JSON格式回复（不要输出其他内容）：
+{"oracle":"选中的神谕","reading":"解读内容"}`},
+                        {role:'user',content:`我的问题：「${q}」`}
+                    ],
+                    temperature:.8
+                })
+            });
+            clearTimeout(timeoutId);
+            if(!r.ok) throw new Error('HTTP '+r.status);
+            const d=await r.json();
+            const text=d.choices[0].message.content.trim();
+            return parseAIResponse(text);
+        } catch(err) {
+            clearTimeout(timeoutId);
+            throw err;
+        }
+    }
+
+    function parseAIResponse(text){
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if(start !== -1 && end !== -1 && end > start){
+            try{
+                const p = JSON.parse(text.slice(start, end + 1));
+                if(p.oracle && p.reading) return p;
+            }catch(e){}
+        }
+        const om=text.match(/"oracle"\s*:\s*"([^"]+)"/);
+        const rm=text.match(/"reading"\s*:\s*"([^"]+)"/);
+        if(om && rm) return {oracle:om[1], reading:rm[1]};
+        throw new Error('Parse failed: '+text);
+    }
+
+    function typewriter(el,text){el.innerHTML='';let d=0;for(const c of text){const s=document.createElement('span');s.textContent=c;s.className='tw';s.style.animationDelay=d+'s';el.appendChild(s);d+=Math.random()*.03+.02}}
+});
+</script>
+</body>
+</html>

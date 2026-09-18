@@ -1,0 +1,11 @@
+.git
+.github
+node_modules
+.env
+.env.*
+*.log
+*.pem
+*.key
+.DS_Store
+deploy.sh
+README.md
