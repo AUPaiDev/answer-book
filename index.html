@@ -128,8 +128,37 @@
         .flip-text{font-size:.78rem;color:var(--ink2);letter-spacing:2px;text-align:center;animation:breathe 2s ease-in-out infinite}
         @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.9}}
 
-        /* Book glow when seeking */
-        .book-spread.seeking{filter:drop-shadow(0 6px 30px rgba(0,0,0,.55)) drop-shadow(0 0 80px rgba(212,175,55,.2))}
+        /* 震感动画：高频微幅震颤（解决 iOS 与桌面端无法调用硬件马达的问题，呈现古籍共鸣视觉震颤） */
+        @keyframes bookTremor {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            15% { transform: translate(-2px, 1.5px) rotate(-0.25deg); }
+            30% { transform: translate(2px, -1.5px) rotate(0.2deg); }
+            45% { transform: translate(-2.5px, -1px) rotate(-0.15deg); }
+            60% { transform: translate(1.5px, 2px) rotate(0.2deg); }
+            75% { transform: translate(-1.5px, -1.5px) rotate(-0.1deg); }
+            90% { transform: translate(2px, 0.5px) rotate(0.15deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes answerImpact {
+            0% { transform: scale(1); }
+            20% { transform: scale(1.025) translate(-2px, -2px); }
+            40% { transform: scale(0.99) translate(1.5px, 1px); }
+            60% { transform: scale(1.008) translate(-0.8px, 0.8px); }
+            80% { transform: scale(1) translate(0.5px, -0.5px); }
+            100% { transform: scale(1) translate(0, 0); }
+        }
+
+        /* Book glow & vibration when seeking */
+        .book-spread.seeking{
+            filter:drop-shadow(0 6px 30px rgba(0,0,0,.55)) drop-shadow(0 0 80px rgba(212,175,55,.2));
+            animation: bookTremor 0.35s ease-in-out infinite;
+        }
+
+        /* Book impact shake on answer reveal */
+        .book-spread.impact{
+            animation: answerImpact 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
 
         /* ====== Question State Content ====== */
         .q-icon{margin-top:auto;margin-bottom:8px;opacity:.15}
@@ -457,8 +486,36 @@
 </div>
 
 <script>
-// 模棱两可、富于机锋与象征意蕴的经典神谕断章（前端兜底库）
+// 多样态灵感神谕池（前端离线兜底库）：包含诙谐网络语、冷幽默、自嘲反讽、警醒提醒与深邃留白
 const AMBIGUOUS_ORACLES = [
+    // 诙谐网感与轻巧幽默
+    "水太深，建议先学会狗刨",
+    "先把饭吃了，世界毁灭也不差这一顿",
+    "薛定谔的猫，正在暗中看你的笑话",
+    "服务器正在摸鱼，你也先歇歇吧",
+    "退一步海阔天空，但退两步容易掉坑里",
+    "风吹哪页读哪页，大不了把书撕了",
+    "主角在第三十集之前，通常都在挨打",
+    "打不过就加入，但别太当真",
+    "天塌不下来，个子高的还在前面顶着",
+    "信号微弱，不如趁机开启飞行模式",
+    "大意了，但没有完全闪",
+    "成年人不做选择，因为往往没得选",
+    "别急，让子弹再多飞一会儿",
+    "真相往往藏在不想看的角落里",
+    "看似在解题，实则在为难自己",
+    "棋局未定，先看谁沉不住气",
+    "洗洗睡吧，梦里什么都有",
+    "你算得太精，连命运都算糊涂了",
+    "与其精神内耗，不如向外发疯",
+    // 警诫提醒与冷静反思
+    "火烛之下，阴影往往更浓",
+    "看似坦途，暗流潜藏深处",
+    "虚掩的门，无须用力撞击",
+    "弦绷得太紧，终难成曲调",
+    "莫在空谷中追寻回声的真假",
+    "答案在问题提出的那一刻已生裂痕",
+    // 经典哲理与自然留白
     "雾中行舟，不知彼岸远近",
     "退潮之后，方见水底真石",
     "镜中之人并非全部真相",
@@ -469,15 +526,6 @@ const AMBIGUOUS_ORACLES = [
     "潮起潮落自有时，莫问东风",
     "风起于青萍之末，不可轻动",
     "逆风而行，抑或顺流而散",
-    "看似坦途，暗流潜藏深处",
-    "种下一粒未知的种子",
-    "虚掩的门，无须用力撞击",
-    "弦绷得太紧，终难成曲调",
-    "远山如黛，近水难测深浅",
-    "火烛之下，阴影往往更浓",
-    "莫在空谷中追寻回声的真假",
-    "落叶飘零处，已见来年青葱",
-    "答案在问题提出的那一刻已生裂痕",
     "不必点亮所有的夜灯",
     "静听夜露滴落瓦檐的声响",
     "未走之路，风景未必逊色"
@@ -792,6 +840,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Main flow
     async function handleAsk(){
         if(seeking) return;
+        // 在用户物理手势（点击事件）发生的第 0 毫秒立即触发硬件触觉振动（解决移动端浏览器异步手势超时拦截）
+        triggerHaptic([35, 45, 35]);
+
         let q=qInput.value.trim();
         if(!q){
             q='我未来的路该怎么走？';
@@ -808,6 +859,8 @@ document.addEventListener('DOMContentLoaded',()=>{
         try{
             const result=await callAPI(key,q);
             book.classList.remove('seeking');
+            book.classList.add('impact');
+            setTimeout(()=>book.classList.remove('impact'), 600);
             seeking=false;
             $('askBtn').disabled = false;
 
@@ -815,7 +868,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             aO.textContent=result.oracle;
             showBookState('answer');
             chime();
-            triggerHaptic([30, 50, 30]);
+            triggerHaptic([25, 30, 25]);
             typewriter(aI,result.reading);
 
             saveHistoryItem({
@@ -827,6 +880,8 @@ document.addEventListener('DOMContentLoaded',()=>{
         }catch(e){
             console.error('API Error:',e);
             book.classList.remove('seeking');
+            book.classList.add('impact');
+            setTimeout(()=>book.classList.remove('impact'), 600);
             seeking=false;
             $('askBtn').disabled = false;
             toast('命运在迷雾中低语，已随机显化启示');
@@ -837,7 +892,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             aI.textContent=fallbackReading;
             showBookState('answer');
             chime();
-            triggerHaptic(20);
+            triggerHaptic([20, 30, 20]);
 
             saveHistoryItem({
                 question: q,
@@ -875,18 +930,29 @@ document.addEventListener('DOMContentLoaded',()=>{
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
         try {
-            const samples = fisherYatesShuffle(AMBIGUOUS_ORACLES).slice(0, 8);
+            const STOCHASTIC_ANGLES = [
+                "【诙谐解构与网络机锋】：带着现代冷幽默、自嘲或轻巧反讽（如：薛定谔的猫正在看戏、水太深先学狗刨、先把饭吃了世界毁灭不差这一顿），戏谑却暗含人生通透",
+                "【警醒与冷峻审慎】：提醒求问者注意盲区、沉没成本与现实代价，莫被冲动、焦虑或盲目乐观冲昏头脑",
+                "【留白与顺其自然】：机缘未定，不必强求定论，此刻让子弹飞一会儿就是最好的解答",
+                "【逆向反思与跳脱】：跳出提问本身的二元非此即彼，从荒谬性或第三人视角审视困局",
+                "【超然隐喻与禅意】：以自然造化或生活琐屑为喻，言有尽而意无穷",
+                "【冷面真实与戳心解惑】：一针见血拆穿求问者内心深处的纠结本源，看似不留情面实则清醒"
+            ];
+            const samples = fisherYatesShuffle(AMBIGUOUS_ORACLES).slice(0, 10);
+            const randomAngle = fisherYatesShuffle(STOCHASTIC_ANGLES)[0];
             const systemPrompt = `你是《答案之书》（The Book of Answers）的神谕之灵。
-《答案之书》的最高魅力在于【不可捉摸的机锋、朦胧的留白与具有多义性的象征】。
-请牢记：
-1. 你绝对不是迎合或安慰求问者的\"心灵鼓励师\"，也不是军师，有时是警诫，有时是顺其自然，有时是静观其变。
-2. 【神谕（oracle）】：必须是一句含蓄留白、带有哲理或自然隐喻的一句话短句（约7-16字）。绝不要太直白或给明确命令，必须具备模棱两可的神秘机锋与多维解读空间。
-3. 【解读（reading）】：恰好两句话（50-80字）。第一句点拨求问者未言明的执念与恐惧，第二句给出耐人寻味的点化，绝不重复神谕原句。
+《答案之书》的最高魅力在于【不可捉摸的机锋、朦胧的留白、意料之外的多元视角与心理投射】。
+神谕绝非千篇一律的高高在上古雅金句，它可以是深邃哲理、含蓄警醒，也可以是带点诙谐幽默的网络机锋、冷面吐槽或自嘲禅意。
 
-【灵感断章参考】：${samples.join(' ｜ ')}
+请牢记你的使命与规则：
+1. 本次命运推演倾向视角为：${randomAngle}。坚决杜绝千篇一律的心灵鸡汤安慰，必须具备不可预测的随机性与多面性！
+2. 【神谕（oracle）】：一句话短句（约6-18字）。可以严肃深邃，也可以诙谐幽默、具网感或自嘲反讽，但【绝不要太直白】（切忌直接给出“去表白吧”、“千万别买”、“明天就辞职”等直白命令）。必须含蓄、具有多重隐喻或戏剧性余味，留出让人回味与脑补的心理空间！
+3. 【解读（reading）】：恰好两句话（50-80字）。第一句直戳求问者心底真正的纠结、盲区、荒诞感或执念；第二句承接上方神谕的幽微意象，给出既通透又点到即止的玄妙点化，绝不重复神谕原句。
 
-严格以JSON格式输出：
-{"oracle":"具有朦胧机锋的一句话神谕","reading":"恰好两句点到即止的精辟解读"}`;
+【断章灵感参考】：${samples.join(' ｜ ')}
+
+严格以JSON格式输出，不要有任何多余文字或markdown标记：
+{"oracle":"含蓄或诙谐的一句话神谕","reading":"恰好两句点到即止的精辟解读"}`;
 
             const r=await fetch('https://api.minimaxi.com/v1/chat/completions',{
                 method:'POST',
