@@ -3805,10 +3805,10 @@
             for (const bi of qBigrams) {
                 if (item.oracle.includes(bi)) score += 2;
             }
-            // 加权基底
-            let weight = Math.pow(score + 1, 1.2);
+            // 加权基底（指数 0.8 平滑化，避免高分页垄断候选池）
+            let weight = Math.pow(score + 1, 0.8);
             if (coolDownSet.has(item.page)) {
-                weight *= 0.05; // 刚翻过的书页降权20倍，避免连续翻开同一页
+                weight *= 0.03; // 刚翻过的书页降权33倍，避免连续翻开同一页
             }
             return { item, weight, score };
         });
@@ -3816,9 +3816,9 @@
         const selectedPages = new Set();
         const result = [];
 
-        // 4. 第一层抽样：意图共鸣候选池（加权概率抽样 5~6 页，消除顶部分数绝对霸榜）
+        // 4. 第一层抽样：意图共鸣候选池（加权概率抽样 3 页，削弱字面锁定，增大盲选惊喜空间）
         const resonantPool = scored.filter(s => s.score > 0);
-        const resonantQuota = Math.max(5, Math.floor(topN * 0.35));
+        const resonantQuota = Math.max(3, Math.floor(topN * 0.25));
         const resonantSampled = weightedSampleWithoutReplacement(
             resonantPool.map(p => p.item),
             resonantPool.map(p => p.weight),
@@ -3835,7 +3835,7 @@
             !selectedPages.has(p.page) && (p.tags || []).some(t => CONTRARIAN_TAGS.has(t))
         ).sort(() => Math.random() - 0.5);
 
-        const contrarianQuota = Math.max(5, Math.floor(topN * 0.35));
+        const contrarianQuota = Math.max(4, Math.floor(topN * 0.30));
         for (const p of contrarianCandidates) {
             if (result.length >= resonantQuota + contrarianQuota) break;
             selectedPages.add(p.page);
@@ -3885,13 +3885,13 @@
         return { page: finalPage, oracle: finalOracle };
     }
 
-    // 严控解读字数，避免超出书页显示极限（90 ~ 130字）
+    // 严控解读字数，避免超出书页显示极限（60 ~ 90 字目标，110 字硬上限）
     function sanitizeReading(rawReading) {
         let reading = rawReading ? String(rawReading).trim() : "顺应内心的真实潮汐，答案自会在前路坦然浮现。";
-        if (reading.length > 135) {
-            const cut = reading.slice(0, 130);
-            const lastPunc = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'));
-            if (lastPunc > 70) {
+        if (reading.length > 110) {
+            const cut = reading.slice(0, 105);
+            const lastPunc = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'), cut.lastIndexOf('，'));
+            if (lastPunc > 50) {
                 reading = cut.slice(0, lastPunc + 1);
             } else {
                 reading = cut + '。';
