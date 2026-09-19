@@ -3885,11 +3885,11 @@
         return { page: finalPage, oracle: finalOracle };
     }
 
-    // 严控解读字数，避免超出书页显示极限（60 ~ 90 字目标，110 字硬上限）
+    // 严控解读字数，避免超出书页显示极限（75 ~ 100 字目标，120 字硬上限）
     function sanitizeReading(rawReading) {
         let reading = rawReading ? String(rawReading).trim() : "顺应内心的真实潮汐，答案自会在前路坦然浮现。";
-        if (reading.length > 110) {
-            const cut = reading.slice(0, 105);
+        if (reading.length > 120) {
+            const cut = reading.slice(0, 115);
             const lastPunc = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'), cut.lastIndexOf('，'));
             if (lastPunc > 50) {
                 reading = cut.slice(0, lastPunc + 1);
