@@ -204,12 +204,15 @@ const ALLOWED_STATIC_FILES = new Set([
     '/robots.txt'
 ]);
 
-// 简易内存速率限制
+// 简易内存速率限制（本地开发测试免限流，防止频繁调试触发 429）
 const ipRateMap = new Map();
 function checkRateLimit(ip) {
+    if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost') {
+        return true;
+    }
     const now = Date.now();
     const windowMs = 60 * 1000;
-    const maxRequests = 15;
+    const maxRequests = 25;
 
     let record = ipRateMap.get(ip);
     if (!record || now - record.resetTime > windowMs) {
@@ -384,10 +387,12 @@ const server = http.createServer(async (req, res) => {
     });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
     console.log(`========================================`);
     console.log(`  📖 《答案之书》服务端启动成功 (机锋随机性与多维留白已生效)`);
-    console.log(`  🌐 本地访问: http://localhost:${PORT}`);
+    console.log(`  🌐 本地回环: http://localhost:${PORT}`);
+    console.log(`  🌐 IPv4访问: http://127.0.0.1:${PORT}`);
+    console.log(`  📱 局域网访问(手机同Wi-Fi): http://192.168.31.146:${PORT}`);
     console.log(`  🔑 环境变量 MINIMAX_API_KEY: ${process.env.MINIMAX_API_KEY ? '已配置 (读取自环境变量)' : '未配置 (请在 .env 或环境变量中配置)'}`);
     console.log(`========================================`);
 });
