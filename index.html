@@ -618,13 +618,86 @@
 </div>
 
 <script>
-// Particles
-const cvs=document.getElementById('particles'),cx=cvs.getContext('2d');let parts=[],seeking=false;
-function resC(){cvs.width=innerWidth;cvs.height=innerHeight}
-class P{constructor(){this.r()}r(){this.x=Math.random()*cvs.width;this.y=Math.random()*cvs.height;this.s=Math.random()*1.5+.2;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.ba=Math.random()*.3+.08;this.a=this.ba;this.ts=Math.random()*.003+.001;this.to=Math.random()*6.28;this.g=Math.random()>.2}u(){if(seeking){const dx=cvs.width/2-this.x,dy=cvs.height/2-this.y;this.x+=dx*.012+(Math.random()-.5)*3.5;this.y+=dy*.012+(Math.random()-.5)*3.5;this.a=Math.min(1,this.a+.03);this.s=Math.min(3,this.s+.02);if(Math.abs(dx)<20&&Math.abs(dy)<20)this.r()}else{this.x+=this.vx;this.y+=this.vy;this.a=this.ba+Math.sin(Date.now()*this.ts+this.to)*.2;if(this.x<-5||this.x>cvs.width+5)this.vx*=-1;if(this.y<-5||this.y>cvs.height+5)this.vy*=-1}}d(){const a=Math.max(0,this.a);cx.fillStyle=this.g?`rgba(212,175,55,${a})`:`rgba(195,185,225,${a*.45})`;cx.beginPath();cx.arc(this.x,this.y,this.s,0,6.28);cx.fill()}}
-function initP(){parts=[];for(let i=0,n=Math.min(Math.floor(innerWidth/8),110);i<n;i++)parts.push(new P())}
-function animP(){cx.clearRect(0,0,cvs.width,cvs.height);for(const p of parts){p.u();p.d()}requestAnimationFrame(animP)}
-addEventListener('resize',()=>{resC();initP()});resC();initP();animP();
+// Celestial Particle System (流体星轨与平滑引力回旋，彻底告别每帧抖动抽搐)
+const cvs = document.getElementById('particles'), cx = cvs.getContext('2d');
+let parts = [], seeking = false;
+function resC(){ cvs.width = window.innerWidth; cvs.height = window.innerHeight; }
+
+class P {
+    constructor(){
+        this.r(true);
+    }
+    r(initial = false){
+        this.x = Math.random() * cvs.width;
+        this.y = initial ? Math.random() * cvs.height : (Math.random() > 0.5 ? -10 : cvs.height + 10);
+        this.s = Math.random() * 1.5 + 0.5;
+        this.vx = (Math.random() - 0.5) * 0.35;
+        this.vy = (Math.random() - 0.5) * 0.35 - 0.12;
+        this.ba = Math.random() * 0.32 + 0.12;
+        this.a = this.ba;
+        this.ts = Math.random() * 0.002 + 0.001;
+        this.to = Math.random() * 6.28;
+        this.g = Math.random() > 0.22; // 金辉为主，缀以幽微星紫
+        this.orbitSpeed = (Math.random() * 0.012 + 0.006) * (Math.random() > 0.5 ? 1 : -1);
+    }
+    u(){
+        if(seeking){
+            // 寻解翻书时：向心引力 + 切向星轨旋流（真实积分流体加速，零随机瞬移抖动）
+            const cxMid = cvs.width / 2;
+            const cyMid = cvs.height / 2;
+            const dx = cxMid - this.x;
+            const dy = cyMid - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+            const normalX = dx / dist;
+            const normalY = dy / dist;
+            const tangentX = -normalY * this.orbitSpeed * Math.min(dist, 240);
+            const tangentY = normalX * this.orbitSpeed * Math.min(dist, 240);
+
+            const pull = Math.min(1.5, 90 / (dist + 70));
+            this.vx = this.vx * 0.93 + (normalX * pull + tangentX * 0.035);
+            this.vy = this.vy * 0.93 + (normalY * pull + tangentY * 0.035);
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // 靠近古卷中脊时柔和渐隐并外围再生，消除突兀跳切
+            if(dist < 32){
+                this.a -= 0.05;
+                if(this.a <= 0) this.r(false);
+            } else {
+                this.a = Math.min(0.85, this.a + 0.025);
+            }
+            this.s = Math.min(2.5, this.s + 0.015);
+        } else {
+            // 平常闲置：从容轻柔的深空星尘浮移
+            this.vx *= 0.985;
+            this.vy *= 0.985;
+            if(Math.abs(this.vx) < 0.08) this.vx = (Math.random() - 0.5) * 0.35;
+            if(Math.abs(this.vy) < 0.08) this.vy = (Math.random() - 0.5) * 0.35 - 0.1;
+
+            this.x += this.vx;
+            this.y += this.vy;
+            this.a = this.ba + Math.sin(Date.now() * this.ts + this.to) * 0.15;
+
+            if(this.x < -10) this.x = cvs.width + 10;
+            if(this.x > cvs.width + 10) this.x = -10;
+            if(this.y < -10) this.y = cvs.height + 10;
+            if(this.y > cvs.height + 10) this.y = -10;
+        }
+    }
+    d(){
+        const a = Math.max(0, Math.min(1, this.a));
+        if(a <= 0.01) return;
+        cx.fillStyle = this.g ? `rgba(212,175,55,${a})` : `rgba(200,190,230,${a * 0.45})`;
+        cx.beginPath();
+        cx.arc(this.x, this.y, this.s, 0, 6.28);
+        cx.fill();
+    }
+}
+function initP(){ parts = []; for(let i = 0, n = Math.min(Math.floor(innerWidth / 9), 95); i < n; i++) parts.push(new P()); }
+function animP(){ cx.clearRect(0, 0, cvs.width, cvs.height); for(const p of parts){ p.u(); p.d(); } requestAnimationFrame(animP); }
+addEventListener('resize', ()=>{ resC(); initP(); }); resC(); initP(); animP();
 
 // App
 document.addEventListener('DOMContentLoaded',()=>{
