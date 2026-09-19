@@ -885,6 +885,8 @@ document.addEventListener('DOMContentLoaded',()=>{
         }
     }
 
+    const recentClientPages = [];
+
     async function callAPI(key,q){
         try {
             const srvController = new AbortController();
@@ -912,7 +914,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
         try {
-            const candidatePages = findRelevantPages(q, 18);
+            const candidatePages = findRelevantPages(q, 18, recentClientPages);
             const candidateText = candidatePages.map(p => `【第${p.page}页】「${p.oracle}」`).join('\n');
             const lens = SERENDIPITY_LENSES[Math.floor(Math.random() * SERENDIPITY_LENSES.length)];
             const systemPrompt = `你是《答案之书》（The Book of Answers）的神谕之灵。
@@ -926,7 +928,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 神谕（oracle）是早已印在书页上的文字，在提问前就已注定！
 神谕【绝对禁止随意发挥】，【绝对严禁出现】求问者提问中提到的任何具体人名、地名、具体物品、食物、行业、公司名或特定词汇！
 神谕必须是完全普适、客观、超脱的独立断章（约6-18字）。
-请顺应本次【${lens.name}】的机锋视角，从下方【候选固定书页】中敏锐选出一页最契合、最能给求问者带来全新顿悟的固定神谕，返回其对应的固定页码（page数字）与神谕原文！切勿总是挑选第一项或墨守成规。
+
+【严禁浅表字面匹配，追求深层机锋顿悟】：
+切勿机械地挑选字面带有相同词汇的书页（例如提问包含“钱/财富”，切忌总是死板挑选带“钱/财富”字眼的页面）！
+《答案之书》的妙谛全在“机锋意象”与“出其不意的顿悟”——那些看似谈论时机、敬畏、止损、认知、等待、舍得、边界或人性的页面，往往能提供更高维度的破局力量！
+请顺应本次【${lens.name}】的机锋视角，从下方【候选固定书页】中敏锐选出一页最契合、最富启发力度的固定神谕，返回其对应的固定页码（page数字）与神谕原文！切勿总是挑选第一项或墨守成规。
 
 【核心铁律 2 - 右侧解读（reading）深入剖析与排版规范】：
 解读是对该页神谕针对求问者具体问题的深入剖析与点拨！
@@ -991,6 +997,8 @@ ${candidateText}
         if(parsed && parsed.oracle && parsed.reading){
             const sanitized = sanitizeOracle(parsed.oracle, parsed.page, q, candidatePages);
             const finalReading = sanitizeReading(parsed.reading);
+            recentClientPages.push(sanitized.page);
+            if(recentClientPages.length > 8) recentClientPages.shift();
             return {
                 page: sanitized.page,
                 oracle: sanitized.oracle,

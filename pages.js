@@ -3739,11 +3739,35 @@
         }
     ];
 
-    // 相对随机性翻书抽样引擎（意图共鸣 + 逆向破局 + 全书偶遇盲选）
-    function findRelevantPages(question, topN = 18) {
+    // 加权非放回随机抽样辅助函数
+    function weightedSampleWithoutReplacement(items, weights, count) {
+        const pool = items.map((item, idx) => ({ item, weight: Math.max(0.01, weights[idx]) }));
+        const result = [];
+        while (result.length < count && pool.length > 0) {
+            const totalWeight = pool.reduce((acc, curr) => acc + curr.weight, 0);
+            let randomVal = Math.random() * totalWeight;
+            let selectedIdx = 0;
+            for (let i = 0; i < pool.length; i++) {
+                randomVal -= pool[i].weight;
+                if (randomVal <= 0) {
+                    selectedIdx = i;
+                    break;
+                }
+            }
+            result.push(pool[selectedIdx].item);
+            pool.splice(selectedIdx, 1);
+        }
+        return result;
+    }
+
+    // 相对随机性翻书抽样引擎（加权共鸣 + 逆向破局 + 全书盲选 + 连抽降权去重）
+    function findRelevantPages(question, topN = 18, excludePages = []) {
         if (!BOOK_PAGES || BOOK_PAGES.length === 0) return [];
+        const coolDownSet = new Set(Array.isArray(excludePages) ? excludePages : []);
+
         if (!question || typeof question !== 'string') {
-            const shuffled = [...BOOK_PAGES].sort(() => Math.random() - 0.5);
+            const pool = BOOK_PAGES.filter(p => !coolDownSet.has(p.page));
+            const shuffled = (pool.length >= topN ? pool : BOOK_PAGES).sort(() => Math.random() - 0.5);
             return shuffled.slice(0, topN);
         }
 
@@ -3769,43 +3793,44 @@
             qBigrams.push(cleanQ.slice(i, i + 2));
         }
 
-        // 3. 计算意向基础分
+        // 3. 计算意向基础分与加权概率（对刚抽过的页码施加冷却惩罚）
         const scored = BOOK_PAGES.map(item => {
             let score = 0;
             if (item.tags) {
                 for (const tag of item.tags) {
-                    if (relevantTags.has(tag)) score += 5;
-                    if (q.includes(tag)) score += 4;
+                    if (relevantTags.has(tag)) score += 4;
+                    if (q.includes(tag)) score += 3;
                 }
             }
             for (const bi of qBigrams) {
                 if (item.oracle.includes(bi)) score += 2;
             }
-            return { item, score };
+            // 加权基底
+            let weight = Math.pow(score + 1, 1.2);
+            if (coolDownSet.has(item.page)) {
+                weight *= 0.05; // 刚翻过的书页降权20倍，避免连续翻开同一页
+            }
+            return { item, weight, score };
         });
-
-        // 4. 第一层抽样：意图共鸣候选池（引入动态权重抖动，确保每次抽取皆有差异）
-        const resonantCandidates = scored
-            .filter(s => s.score > 0)
-            .map(s => ({
-                item: s.item,
-                dynamicScore: s.score * (0.6 + Math.random() * 0.8) + Math.random() * 8
-            }))
-            .sort((a, b) => b.dynamicScore - a.dynamicScore);
 
         const selectedPages = new Set();
         const result = [];
-        const resonantQuota = Math.max(5, Math.floor(topN * 0.35));
 
-        for (const entry of resonantCandidates) {
-            if (result.length >= resonantQuota) break;
-            if (!selectedPages.has(entry.item.page)) {
-                selectedPages.add(entry.item.page);
-                result.push(entry.item);
-            }
+        // 4. 第一层抽样：意图共鸣候选池（加权概率抽样 5~6 页，消除顶部分数绝对霸榜）
+        const resonantPool = scored.filter(s => s.score > 0);
+        const resonantQuota = Math.max(5, Math.floor(topN * 0.35));
+        const resonantSampled = weightedSampleWithoutReplacement(
+            resonantPool.map(p => p.item),
+            resonantPool.map(p => p.weight),
+            resonantQuota
+        );
+
+        for (const item of resonantSampled) {
+            selectedPages.add(item.page);
+            result.push(item);
         }
 
-        // 5. 第二层抽样：逆向反思/警醒棒喝候选池（打破定势思维）
+        // 5. 第二层抽样：逆向反思/警醒棒喝候选池（打破定势思维，抽样 5~6 页）
         const contrarianCandidates = BOOK_PAGES.filter(p =>
             !selectedPages.has(p.page) && (p.tags || []).some(t => CONTRARIAN_TAGS.has(t))
         ).sort(() => Math.random() - 0.5);
