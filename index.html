@@ -302,8 +302,11 @@
     <button class="icon-btn" id="historyBtn" aria-label="神谕足迹" title="神谕足迹">
         <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
     </button>
-    <button class="icon-btn" id="settingsBtn" aria-label="设置" title="设置">
-        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.48.48 0 0 0 15.92 2h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L4.74 8.47c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
+    <button class="icon-btn" id="muteBtn" aria-label="静音设置" title="静音设置">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+    </button>
+    <button class="icon-btn" id="settingsBtn" aria-label="关于" title="关于">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
     </button>
 </div>
 
@@ -517,7 +520,33 @@ document.addEventListener('DOMContentLoaded',()=>{
     const leftIn=$('leftInput'),leftAns=$('leftAnswer'),rightIn=$('rightInput'),rightAns=$('rightAnswer');
     const aQ=$('aQ'),aO=$('aO'),aI=$('aI'),actions=$('bookActions');
 
-    // Audio Context (支持 iOS 预热与解锁)
+    // 静音状态控制与持久化
+    let isMuted = localStorage.getItem('BOOK_MUTE') === 'true';
+    function updateMuteBtn(){
+        const b = $('muteBtn');
+        if(!b) return;
+        if(isMuted){
+            b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
+            b.setAttribute('title', '开启声音');
+            b.setAttribute('aria-label', '开启声音');
+            b.style.opacity = '0.55';
+        } else {
+            b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+            b.setAttribute('title', '静音');
+            b.setAttribute('aria-label', '静音');
+            b.style.opacity = '1';
+        }
+    }
+    function toggleMute(){
+        isMuted = !isMuted;
+        localStorage.setItem('BOOK_MUTE', isMuted ? 'true' : 'false');
+        updateMuteBtn();
+        toast(isMuted ? '已开启静音模式' : '已开启神谕之声');
+    }
+    if($('muteBtn')) $('muteBtn').onclick = toggleMute;
+    updateMuteBtn();
+
+    // Audio Context (支持 iOS 预热与静默解锁)
     let actx;
     function initAudioContext(){
         try{
@@ -531,26 +560,79 @@ document.addEventListener('DOMContentLoaded',()=>{
         }catch(e){}
     }
 
-    function chime(){
+    // 拟真书页快速翻动摩擦声（Paper Flutter / Riffling，消除生硬电子音）
+    function playPaperFlutter(){
+        if(isMuted) return;
         try{
             initAudioContext();
             if(!actx) return;
-            const o=actx.createOscillator(),g=actx.createGain();
-            o.type='sine';
-            o.frequency.setValueAtTime(660,actx.currentTime);
-            o.frequency.exponentialRampToValueAtTime(1320,actx.currentTime+1.5);
-            g.gain.setValueAtTime(0,actx.currentTime);
-            g.gain.linearRampToValueAtTime(.06,actx.currentTime+.05);
-            g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+2);
-            o.connect(g);
-            g.connect(actx.destination);
-            o.start();
-            o.stop(actx.currentTime+2);
+            const now = actx.currentTime;
+            const duration = 0.35;
+            const sampleRate = actx.sampleRate;
+            const buffer = actx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
+            const data = buffer.getChannelData(0);
+            for(let i = 0; i < data.length; i++){
+                const t = i / sampleRate;
+                const flutter = Math.sin(t * 90) * 0.45 + 0.55;
+                data[i] = (Math.random() * 2 - 1) * flutter * Math.exp(-t * 3.5);
+            }
+            const src = actx.createBufferSource();
+            src.buffer = buffer;
+
+            const filter = actx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1500, now);
+            filter.Q.setValueAtTime(1.1, now);
+
+            const gain = actx.createGain();
+            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            src.connect(filter);
+            filter.connect(gain);
+            gain.connect(actx.destination);
+            src.start(now);
         }catch(e){}
     }
 
-    // 触觉振动反馈
+    // 翻书定格沉稳神韵声（厚重书页扣合感 + 微妙古铜余韵）
+    function playBookReveal(){
+        if(isMuted) return;
+        try{
+            initAudioContext();
+            if(!actx) return;
+            const now = actx.currentTime;
+
+            // 1. 厚重牛皮书页闭合下沉的物理“嗒”声
+            const thumpOsc = actx.createOscillator();
+            const thumpGain = actx.createGain();
+            thumpOsc.type = 'sine';
+            thumpOsc.frequency.setValueAtTime(170, now);
+            thumpOsc.frequency.exponentialRampToValueAtTime(45, now + 0.16);
+            thumpGain.gain.setValueAtTime(0.15, now);
+            thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            thumpOsc.connect(thumpGain);
+            thumpGain.connect(actx.destination);
+            thumpOsc.start(now);
+            thumpOsc.stop(now + 0.2);
+
+            // 2. 纯净温润的古籍微磬声（528Hz 治愈和声，取代刺耳电子音）
+            const chimeOsc = actx.createOscillator();
+            const chimeGain = actx.createGain();
+            chimeOsc.type = 'sine';
+            chimeOsc.frequency.setValueAtTime(528, now);
+            chimeGain.gain.setValueAtTime(0.045, now);
+            chimeGain.gain.exponentialRampToValueAtTime(0.0005, now + 1.8);
+            chimeOsc.connect(chimeGain);
+            chimeGain.connect(actx.destination);
+            chimeOsc.start(now);
+            chimeOsc.stop(now + 1.8);
+        }catch(e){}
+    }
+
+    // 触觉振动反馈（静音模式下可自适应关闭）
     function triggerHaptic(pattern = [15, 30, 15]){
+        if(isMuted) return;
         try {
             if (navigator.vibrate) {
                 navigator.vibrate(pattern);
@@ -570,6 +652,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Cover → Book
     $('openBtn').onclick=()=>{
         initAudioContext();
+        playPaperFlutter();
         triggerHaptic(20);
         showBookState('input');
         switchScene('Book');
@@ -603,6 +686,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     // Again
     $('againBtn').onclick=()=>{
+        playPaperFlutter();
         triggerHaptic(15);
         qInput.value='';aO.textContent='';aI.innerHTML='';aQ.textContent='';
         showBookState('input');
@@ -805,6 +889,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         book.classList.add('seeking');
         seeking=true;
         actions.classList.remove('show');
+        playPaperFlutter();
 
         try{
             const result=await callAPI(q);
@@ -818,7 +903,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             aO.textContent=result.oracle;
             $('aPageBadge').textContent='第 ' + (result.page || 188) + ' 页';
             showBookState('answer');
-            chime();
+            playBookReveal();
             triggerHaptic([25, 30, 25]);
             typewriter(aI,result.reading);
 
@@ -844,7 +929,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             $('aPageBadge').textContent='第 2 页';
             const offlineReading = '生活偶遇波澜与停滞，是命运在为你留出沉淀的契机。收敛心神，顺应内心的真实节律，答案自会在前路坦然浮现。';
             showBookState('answer');
-            chime();
+            playBookReveal();
             triggerHaptic([20, 30, 20]);
             typewriter(aI, offlineReading);
         }
