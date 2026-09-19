@@ -9,9 +9,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231a1025%22 width=%22100%22 height=%22100%22 rx=%2210%22/><path d=%22M30 20h40c3 0 5 2 5 5v50c0 3-2 5-5 5H30c-3 0-5-2-5-5V25c0-3 2-5 5-5z%22 fill=%22%23d4af37%22 opacity=%220.9%22/></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="pages.js"></script>
     <style>
         :root{
             --bg:#06070f;--bg2:#0e0818;
@@ -450,14 +448,17 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Settings Modal -->
+<!-- About Modal -->
 <div class="modal" id="sMod">
     <div class="modal-box">
-        <button class="m-close" id="sClose"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-        <h2 class="modal-t">神秘设置</h2>
-        <div><label class="form-lb" for="apiKeyIn">MiniMax API Key（用于AI解读，可选）</label><input type="password" id="apiKeyIn" class="form-in" placeholder="默认使用服务端安全 Key"></div>
-        <div class="err" id="sErr"></div>
-        <div class="m-acts"><button class="btn btn-ghost" id="sCancel">取消</button><button class="btn" id="sSave">保存</button></div>
+        <button class="m-close" id="sClose" aria-label="关闭"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <h2 class="modal-t">关于《答案之书》</h2>
+        <div style="font-size:13px;line-height:1.9;color:rgba(212,175,55,.8);margin:16px 0">
+            <p>《答案之书》全书共三百六十五页，每一页皆印刻着普适客观的独立神谕断章。</p>
+            <p style="margin-top:8px">当你心怀困惑虔心翻开，服务端命运机锋引擎将按机缘视角为你显化当下一页的深刻洞察。</p>
+            <p style="margin-top:8px;opacity:0.75">顺应真实，心定自安。</p>
+        </div>
+        <div class="m-acts"><button class="btn btn-sm" id="sDone">知道了</button></div>
     </div>
 </div>
 
@@ -498,26 +499,6 @@
 </div>
 
 <script>
-// 引入外部完整365页书库及关联检索引擎（由 pages.js 提供）
-const BOOK_PAGES = window.BOOK_PAGES || [];
-const findRelevantPages = window.findRelevantPages || ((q, n) => BOOK_PAGES.slice(0, n));
-const sanitizeOracle = window.sanitizeOracle || ((o, p) => ({ page: p || 1, oracle: o }));
-const sanitizeReading = window.sanitizeReading || ((r) => r);
-const SERENDIPITY_LENSES = window.SERENDIPITY_LENSES || [
-    { name: "冷面警醒·直面代价", cue: "指出求问者容易忽视的深层代价、现实盲区或自我欺骗，给出一记清醒的提醒。" },
-    { name: "逆向破局·跳出局限", cue: "打破非此即彼的纠结，换一个反常识或出其不意的破局角度，寻找第三种可能。" },
-    { name: "幽默解构·举重若轻", cue: "以诙谐、荒谬或自嘲的松弛感消解沉重，提醒求问者别把事情看得太严重。" },
-    { name: "顺应时节·无为留白", cue: "顺水推舟、不争而待，提醒求问者不必急于要答案，给事物自然演进的时间。" },
-    { name: "果决出击·斩断犹豫", cue: "直击拖延与焦虑的本质，唤醒内心的勇气与决断力，以果敢行动破除停滞。" },
-    { name: "见好就收·守中知止", cue: "提醒知止常止、留有余地，防范过犹不及，守住当下的基本盘与内心安宁。" },
-    { name: "天地超然·观照自心", cue: "以诗意、自然隐喻或广阔格局启迪求问者，跳出眼前一城一池的得失。" }
-];
-const getRandomFallback = window.getRandomFallback || ((q) => ({
-    page: 188,
-    oracle: "潮起潮落自有时，莫问东风",
-    reading: "顺应内心的真实潮汐，答案自会在前路坦然浮现。"
-}));
-
 // Particles
 const cvs=document.getElementById('particles'),cx=cvs.getContext('2d');let parts=[],seeking=false;
 function resC(){cvs.width=innerWidth;cvs.height=innerHeight}
@@ -798,23 +779,14 @@ document.addEventListener('DOMContentLoaded',()=>{
         }
     };
 
-    const DEFAULT_KEY = "";
-    function getKey(){
-        return localStorage.getItem('MINIMAX_API_KEY') || DEFAULT_KEY;
-    }
-
-    // Settings
-    const sM=$('sMod'),sK=$('apiKeyIn'),sE=$('sErr');
-    function openS(){sK.value=localStorage.getItem('MINIMAX_API_KEY')||DEFAULT_KEY;sE.style.display='none';sM.classList.add('active')}
+    // About Modal
+    const sM=$('sMod');
+    function openS(){sM.classList.add('active')}
     function closeS(){sM.classList.remove('active')}
-    $('settingsBtn').onclick=openS;$('sClose').onclick=closeS;$('sCancel').onclick=closeS;
+    if($('settingsBtn')) $('settingsBtn').onclick=openS;
+    if($('sClose')) $('sClose').onclick=closeS;
+    if($('sDone')) $('sDone').onclick=closeS;
     sM.onclick=e=>{if(e.target===sM)closeS()};
-    $('sSave').onclick=()=>{
-        const k=sK.value.trim();
-        localStorage.setItem('MINIMAX_API_KEY',k);
-        closeS();
-        toast(k ? '已保存自定义 Key' : '已恢复默认服务设置');
-    };
 
     // Main flow
     async function handleAsk(){
@@ -827,7 +799,6 @@ document.addEventListener('DOMContentLoaded',()=>{
             q='我未来的路该怎么走？';
             qInput.value=q;
         }
-        const key=getKey();
 
         qInput.blur();
         $('askBtn').disabled = true;
@@ -836,7 +807,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         actions.classList.remove('show');
 
         try{
-            const result=await callAPI(key,q);
+            const result=await callAPI(q);
             book.classList.remove('seeking');
             book.classList.add('impact');
             setTimeout(()=>book.classList.remove('impact'), 600);
@@ -865,147 +836,51 @@ document.addEventListener('DOMContentLoaded',()=>{
             setTimeout(()=>book.classList.remove('impact'), 600);
             seeking=false;
             $('askBtn').disabled = false;
-            toast('命运在迷雾中低语，已随机显化启示');
-            const fallbackData = getRandomFallback(q);
+            toast(e.message || '网络连接在迷雾中静默，已显化备用启示');
+
+            // 优雅离线启示
             aQ.textContent=q;
-            aO.textContent=fallbackData.oracle;
-            $('aPageBadge').textContent='第 ' + fallbackData.page + ' 页';
-            aI.textContent=fallbackData.reading;
+            aO.textContent='潮起潮落自有时，莫问东风';
+            $('aPageBadge').textContent='第 2 页';
+            const offlineReading = '生活偶遇波澜与停滞，是命运在为你留出沉淀的契机。收敛心神，顺应内心的真实节律，答案自会在前路坦然浮现。';
             showBookState('answer');
             chime();
             triggerHaptic([20, 30, 20]);
-
-            saveHistoryItem({
-                question: q,
-                page: fallbackData.page,
-                oracle: fallbackData.oracle,
-                reading: fallbackData.reading,
-                time: Date.now()
-            });
+            typewriter(aI, offlineReading);
         }
     }
 
-    const recentClientPages = [];
+    async function callAPI(q){
+        // 读取当前用户本地历史最近翻过的页码，传递给服务端作为用户维度的防撞车降权依据
+        const history = getHistoryList();
+        const recentPages = history.slice(0, 8).map(h => h.page).filter(Boolean);
 
-    async function callAPI(key,q){
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+
         try {
-            const srvController = new AbortController();
-            const srvTimeout = setTimeout(() => srvController.abort(), 25000);
             const resp = await fetch('/api/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: q }),
-                signal: srvController.signal
-            });
-            clearTimeout(srvTimeout);
-            if (resp.ok) {
-                const resData = await resp.json();
-                if (resData.success && resData.data && resData.data.oracle) {
-                    return resData.data;
-                }
-            }
-        } catch (serverErr) {
-            console.log('服务端接口异常或不可达，切换为备用方案...', serverErr);
-        }
-
-        if (!key) {
-            throw new Error('未配置 API Key，且服务端暂不可用');
-        }
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-        try {
-            const candidatePages = findRelevantPages(q, 18, recentClientPages);
-            const candidateText = candidatePages.map(p => `【第${p.page}页】「${p.oracle}」`).join('\n');
-            const lens = SERENDIPITY_LENSES[Math.floor(Math.random() * SERENDIPITY_LENSES.length)];
-            const systemPrompt = `你是《答案之书》（The Book of Answers）的神谕之灵。
-《答案之书》是一本在求问者翻开前就已经印刷成册、拥有固定页码与固定神谕的实体古籍（全书共365页）。
-求问者翻阅古籍的过程，具有命运的机缘与相对随机性。绝不能对相似的问题总是机械重复相同的倾向性答案！
-
-【本次命运翻阅的机锋视角】：【${lens.name}】
-视角指引：${lens.cue}
-
-【核心铁律 1 - 顺应机锋，自选一页固定神谕】：
-神谕（oracle）是早已印在书页上的文字，在提问前就已注定！
-神谕【绝对禁止随意发挥】，【绝对严禁出现】求问者提问中提到的任何具体人名、地名、具体物品、食物、行业、公司名或特定词汇！
-神谕必须是完全普适、客观、超脱的独立断章（约6-18字）。
-
-【严禁浅表字面匹配，追求深层机锋顿悟】：
-切勿机械地挑选字面带有相同词汇的书页（例如提问包含“钱/财富”，切忌总是死板挑选带“钱/财富”字眼的页面）！
-《答案之书》的妙谛全在“机锋意象”与“出其不意的顿悟”——那些看似谈论时机、敬畏、止损、认知、等待、舍得、边界或人性的页面，往往能提供更高维度的破局力量！
-请顺应本次【${lens.name}】的机锋视角，从下方【候选固定书页】中敏锐选出一页最契合、最富启发力度的固定神谕，返回其对应的固定页码（page数字）与神谕原文！切勿总是挑选第一项或墨守成规。
-
-【核心铁律 2 - 右侧解读（reading）深入剖析与排版规范】：
-解读是对该页神谕针对求问者具体问题的深入剖析与点拨！
-在解读中，你【完全可以且应当】直接提及求问者的问题背景、具体纠结的人事与生活处境。
-字数与深度：严格控制在 90-130 字之间（绝对不可超过书页容纳极限，不可超过135字）。
-深入剖析结构：
-1. 深入剖析其当下心理盲区、现实困扰与深层顾虑；
-2. 借该页神谕的机锋意象与本次【${lens.name}】视角的启发，剖析困局本质与破局思路；
-3. 给出通透、警醒、释怀或果断的行动启迪。
-
-【候选固定书页】：
-${candidateText}
-
-请输出严格的 JSON 格式，不要包含任何 markdown 代码块或多余字符：
-{"page":页码数字,"oracle":"选定的神谕原文","reading":"90-130字的深入剖析解读"}`;
-
-            const r=await fetch('https://api.minimaxi.com/v1/chat/completions',{
-                method:'POST',
-                headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-                signal: controller.signal,
-                body:JSON.stringify({
-                    model:'MiniMax-Text-01',
-                    messages:[
-                        {role:'system',content:systemPrompt},
-                        {role:'user',content:`求问者疑问：「${q}」`}
-                    ],
-                    temperature:.98
-                })
+                body: JSON.stringify({ question: q, recentPages }),
+                signal: controller.signal
             });
             clearTimeout(timeoutId);
-            if(!r.ok) throw new Error('HTTP '+r.status);
-            const d=await r.json();
-            const text=d.choices[0].message.content.trim();
-            return parseAIResponse(text, q, candidatePages);
-        } catch(err) {
+
+            if (!resp.ok) {
+                const errData = await resp.json().catch(() => ({}));
+                throw new Error(errData.error || ('服务响应异常 (HTTP ' + resp.status + ')'));
+            }
+
+            const resData = await resp.json();
+            if (resData.success && resData.data && resData.data.oracle) {
+                return resData.data;
+            }
+            throw new Error(resData.error || '获取神谕失败，请稍后再试');
+        } catch (err) {
             clearTimeout(timeoutId);
             throw err;
         }
-    }
-
-    function parseAIResponse(text, q, candidatePages){
-        let parsed = null;
-        const start = text.indexOf('{');
-        const end = text.lastIndexOf('}');
-        if(start !== -1 && end !== -1 && end > start){
-            try{
-                parsed = JSON.parse(text.slice(start, end + 1));
-            }catch(e){}
-        }
-        if(!parsed){
-            const om=text.match(/"oracle"\s*:\s*"([^"]+)"/);
-            const rm=text.match(/"reading"\s*:\s*"([^"]+)"/);
-            const pm=text.match(/"page"\s*:\s*(\d+)/);
-            if(om && rm) {
-                parsed = {
-                    oracle: om[1].trim(),
-                    reading: rm[1].trim(),
-                    page: pm ? parseInt(pm[1], 10) : candidatePages[0].page
-                };
-            }
-        }
-        if(parsed && parsed.oracle && parsed.reading){
-            const sanitized = sanitizeOracle(parsed.oracle, parsed.page, q, candidatePages);
-            const finalReading = sanitizeReading(parsed.reading);
-            recentClientPages.push(sanitized.page);
-            if(recentClientPages.length > 8) recentClientPages.shift();
-            return {
-                page: sanitized.page,
-                oracle: sanitized.oracle,
-                reading: finalReading
-            };
-        }
-        throw new Error('Parse failed: '+text);
     }
 
     function typewriter(el,text){el.innerHTML='';let d=0;for(const c of text){const s=document.createElement('span');s.textContent=c;s.className='tw';s.style.animationDelay=d+'s';el.appendChild(s);d+=Math.random()*.03+.02}}

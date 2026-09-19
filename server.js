@@ -74,16 +74,13 @@ try {
     ];
 }
 
-// 记录近期抽取的书页（滑动窗口大小为8），避免对同一用户/提问连续撞车同一页
-const recentSelectedPages = [];
-
-// 请求 MiniMax API
-async function callMiniMaxAPI(question, apiKey) {
+// 请求 MiniMax API（接收用户维度的翻阅足迹 userRecentPages，实现严格的用户级连抽降权隔离）
+async function callMiniMaxAPI(question, apiKey, userRecentPages = []) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
-    // 基于求问者的问题，多层次抽样候选固定书页（意图共鸣 + 逆向破局 + 全书盲选 + 连抽降权）
-    const candidatePages = findRelevantPages(question, 18, recentSelectedPages);
+    // 基于求问者的问题，多层次抽样候选固定书页（意图共鸣 + 逆向破局 + 全书盲选 + 用户维度连抽降权）
+    const candidatePages = findRelevantPages(question, 18, userRecentPages);
     const candidateText = candidatePages.map(p => `【第${p.page}页】「${p.oracle}」`).join('\n');
 
     // 随机注入命运机锋视角，确保每一次翻阅都有不同的启发维度
@@ -176,8 +173,6 @@ ${candidateText}
         if (parsed && parsed.oracle && parsed.reading) {
             const sanitized = sanitizeOracle(parsed.oracle, parsed.page, question, candidatePages);
             const finalReading = sanitizeReading(parsed.reading);
-            recentSelectedPages.push(sanitized.page);
-            if (recentSelectedPages.length > 8) recentSelectedPages.shift();
             return {
                 page: sanitized.page,
                 oracle: sanitized.oracle,
@@ -306,10 +301,14 @@ const server = http.createServer(async (req, res) => {
 
             try {
                 let question = '';
+                let userRecentPages = [];
                 if (body) {
                     try {
                         const parsed = JSON.parse(body);
                         question = (parsed.question || '').trim();
+                        if (Array.isArray(parsed.recentPages)) {
+                            userRecentPages = parsed.recentPages.map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 365);
+                        }
                     } catch (e) {
                         question = body.trim();
                     }
@@ -331,8 +330,9 @@ const server = http.createServer(async (req, res) => {
                     return;
                 }
 
-                console.log(`[Ask] 收到提问: "${question}"`);
-                const result = await callMiniMaxAPI(question, apiKey);
+                console.log(`[Ask] 收到提问: "${question}" (用户冷却页码数: ${userRecentPages.length})`);
+                const result = await callMiniMaxAPI(question, apiKey, userRecentPages);
+                console.log(`[Ask] 第${result.page}页 神谕:[${result.oracle}] - ${result.reading}`);
                 console.log(`[Ask] 第${result.page}页 神谕:[${result.oracle}] - ${result.reading}`);
 
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
