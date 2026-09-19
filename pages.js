@@ -3664,64 +3664,176 @@
     }
 ];
 
-    // 关键词与问题意图的权重词库（用于精准关联合适书页）
-    const THEME_KEYWORD_MAP = {
-        '职场': ['工作', '上班', '辞职', '跳槽', '老板', '领导', '同事', '升职', '加薪', '工位', '打工', '裁员', '面试', '项目', '入职', '事业', '前途', '考公', '编制'],
-        '搞钱': ['搞钱', '赚钱', '买房', '投资', '理财', '买车', '生意', '合伙', '亏本', '借钱', '花钱', '发财', '基金', '股票', '创业', '开店', '价格', '富'],
-        '情感': ['表白', '喜欢', '恋爱', '分手', '前任', '复合', '结婚', '离婚', '相亲', '渣男', '渣女', '暗恋', '另一半', '老公', '老婆', '男朋友', '女朋友', '暧昧', '情'],
-        '内耗': ['焦虑', '迷茫', '抑郁', '难受', '内耗', '失眠', '累', '压力', '崩溃', '自责', '孤独', '烦', '心慌', '痛苦', '不开心', '不自信'],
-        '人际': ['朋友', '吵架', '矛盾', '撕逼', '合伙人', '亲戚', '家庭', '父母', '讨厌', '背叛', '关系', '沟通', '冷战', '面子', '算计'],
-        '抉择': ['该不该', '要不要', '能不能', '去不去', '留不留', '买不买', '选哪个', '怎么办', '如何抉择', '二选一', '左右为难', '到底', '决定'],
-        '时机': ['时候', '现在', '等等', '未来', '过阵子', '机会', '何时', '来得及', '是不是时候', '转机', '春天', '冬天', '运气'],
-        '幽默': ['摆烂', '摸鱼', '躺平', '发疯', '干饭', '吃啥', '整活', '划水', '睡大觉', '搞毛', '算了吧', '玩']
+    // 问答意图与意象分类配置（包含触发词与关联的机锋标签集合，扩大候选覆盖面）
+    const THEME_CONFIG = {
+        '职场': {
+            keywords: ['工作', '上班', '辞职', '跳槽', '老板', '领导', '同事', '升职', '加薪', '工位', '打工', '裁员', '面试', '项目', '入职', '事业', '前途', '考公', '编制', '体制'],
+            tags: ['职场', '现实', '务实', '平台', '边界', '清醒', '定力', '底线', '变通', '行动', '成长']
+        },
+        '搞钱': {
+            keywords: ['搞钱', '赚钱', '买房', '投资', '理财', '买车', '生意', '合伙', '亏本', '借钱', '花钱', '发财', '基金', '股票', '创业', '开店', '价格', '富', '财运'],
+            tags: ['搞钱', '财富', '务实', '止损', '风险', '克制', '敬畏', '现实', '独立', '代价', '两面性']
+        },
+        '情感': {
+            keywords: ['表白', '喜欢', '恋爱', '分手', '前任', '复合', '结婚', '离婚', '相亲', '渣男', '渣女', '暗恋', '另一半', '老公', '老婆', '男朋友', '女朋友', '暧昧', '情', '爱', '心动'],
+            tags: ['情感', '感情', '缘分', '真诚', '坦诚', '真心', '自爱', '执念', '分寸', '边界', '释怀', '独立', '从容', '治愈']
+        },
+        '内耗': {
+            keywords: ['焦虑', '迷茫', '抑郁', '难受', '内耗', '失眠', '累', '压力', '崩溃', '自责', '孤独', '烦', '心慌', '痛苦', '不开心', '不自信', '难过', '怀疑'],
+            tags: ['内耗', '释怀', '放下', '治愈', '松弛', '放过自己', '心态', '从容', '希望', '豁达', '清醒', '当下']
+        },
+        '人际': {
+            keywords: ['朋友', '吵架', '矛盾', '撕逼', '合伙人', '亲戚', '家庭', '父母', '讨厌', '背叛', '关系', '沟通', '冷战', '面子', '算计', '合不来'],
+            tags: ['人际', '边界', '分寸', '清醒', '克制', '底线', '看清', '坦诚', '处世', '从容']
+        },
+        '抉择': {
+            keywords: ['该不该', '要不要', '能不能', '去不去', '留不留', '买不买', '选哪个', '怎么办', '如何抉择', '二选一', '左右为难', '到底', '决定', '选择', '纠结'],
+            tags: ['抉择', '果断', '行动', '直觉', '破局', '变通', '定力', '当下', '无悔', '清醒']
+        },
+        '时机': {
+            keywords: ['时候', '现在', '等等', '未来', '过阵子', '机会', '何时', '来得及', '是不是时候', '转机', '春天', '冬天', '运气', '早晚', '急'],
+            tags: ['时机', '耐心', '从容', '转机', '等待', '顺其自然', '当下', '定力', '沉淀']
+        },
+        '幽默': {
+            keywords: ['摆烂', '摸鱼', '躺平', '发疯', '干饭', '吃啥', '整活', '划水', '睡大觉', '搞毛', '算了吧', '玩', '无聊', '累了'],
+            tags: ['幽默', '自嘲', '松弛', '生活', '放过自己', '人间真实', '释怀', '豁达']
+        }
     };
 
-    // 基于求问者问题计算关联得分，筛选出与问题最契合的书页
-    function findRelevantPages(question, topN = 15) {
-        if (!question || typeof question !== 'string') {
-            return BOOK_PAGES.slice(0, topN);
+    // 逆向反思、当头棒喝、打破二元对立的特殊意象标签库
+    const CONTRARIAN_TAGS = new Set([
+        '警惕', '代价', '盲区', '看清', '幽默', '自嘲', '反思', '破局',
+        '留白', '无为', '顺其自然', '两面性', '执念', '冷面', '棒喝',
+        '清醒', '克制', '敬畏', '底线', '变通', '松弛', '放过自己'
+    ]);
+
+    // 七大命运翻阅机锋视角（保证同类问题有多重启发维度，打破单一倾向性）
+    const SERENDIPITY_LENSES = [
+        {
+            name: "冷面警醒·直面代价",
+            cue: "指出求问者容易忽视的深层代价、现实盲区或自我欺骗，给出一记清醒的提醒。"
+        },
+        {
+            name: "逆向破局·跳出局限",
+            cue: "打破非此即彼的纠结，换一个反常识或出其不意的破局角度，寻找第三种可能。"
+        },
+        {
+            name: "幽默解构·举重若轻",
+            cue: "以诙谐、荒谬或自嘲的松弛感消解沉重，提醒求问者别把事情看得太严重。"
+        },
+        {
+            name: "顺应时节·无为留白",
+            cue: "顺水推舟、不争而待，提醒求问者不必急于要答案，给事物自然演进的时间。"
+        },
+        {
+            name: "果决出击·斩断犹豫",
+            cue: "直击拖延与焦虑的本质，唤醒内心的勇气与决断力，以果敢行动破除停滞。"
+        },
+        {
+            name: "见好就收·守中知止",
+            cue: "提醒知止常止、留有余地，防范过犹不及，守住当下的基本盘与内心安宁。"
+        },
+        {
+            name: "天地超然·观照自心",
+            cue: "以诗意、自然隐喻或广阔格局启迪求问者，跳出眼前一城一池的得失。"
         }
+    ];
+
+    // 相对随机性翻书抽样引擎（意图共鸣 + 逆向破局 + 全书偶遇盲选）
+    function findRelevantPages(question, topN = 18) {
+        if (!BOOK_PAGES || BOOK_PAGES.length === 0) return [];
+        if (!question || typeof question !== 'string') {
+            const shuffled = [...BOOK_PAGES].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, topN);
+        }
+
         const q = question.toLowerCase();
         
-        // 计算每个主题在问题中的匹配权重
+        // 1. 识别主题与共鸣标签
         const activeThemes = new Set();
-        for (const [theme, keywords] of Object.entries(THEME_KEYWORD_MAP)) {
-            for (const kw of keywords) {
+        const relevantTags = new Set();
+        for (const [theme, cfg] of Object.entries(THEME_CONFIG)) {
+            for (const kw of cfg.keywords) {
                 if (q.includes(kw)) {
                     activeThemes.add(theme);
+                    (cfg.tags || []).forEach(t => relevantTags.add(t));
                     break;
                 }
             }
         }
 
-        // 提取问题中的双字词以辅助词义相似度
+        // 2. 提取双字词特征
         const cleanQ = q.replace(/[\s\p{P}+~$`^=|<>～—_+]/gu, '');
         const qBigrams = [];
         for (let i = 0; i < cleanQ.length - 1; i++) {
             qBigrams.push(cleanQ.slice(i, i + 2));
         }
 
-        // 打分排序
+        // 3. 计算意向基础分
         const scored = BOOK_PAGES.map(item => {
             let score = 0;
-            // 主题匹配得分
             if (item.tags) {
                 for (const tag of item.tags) {
-                    if (activeThemes.has(tag)) score += 8;
-                    if (q.includes(tag)) score += 5;
+                    if (relevantTags.has(tag)) score += 5;
+                    if (q.includes(tag)) score += 4;
                 }
             }
-            // 语义机锋特征词匹配
             for (const bi of qBigrams) {
                 if (item.oracle.includes(bi)) score += 2;
             }
-            // 随机微扰，保证同一问题多次抽取仍有不同机锋翻动感
-            score += Math.random() * 3.5;
             return { item, score };
         });
 
-        scored.sort((a, b) => b.score - a.score);
-        return scored.slice(0, topN).map(s => s.item);
+        // 4. 第一层抽样：意图共鸣候选池（引入动态权重抖动，确保每次抽取皆有差异）
+        const resonantCandidates = scored
+            .filter(s => s.score > 0)
+            .map(s => ({
+                item: s.item,
+                dynamicScore: s.score * (0.6 + Math.random() * 0.8) + Math.random() * 8
+            }))
+            .sort((a, b) => b.dynamicScore - a.dynamicScore);
+
+        const selectedPages = new Set();
+        const result = [];
+        const resonantQuota = Math.max(5, Math.floor(topN * 0.35));
+
+        for (const entry of resonantCandidates) {
+            if (result.length >= resonantQuota) break;
+            if (!selectedPages.has(entry.item.page)) {
+                selectedPages.add(entry.item.page);
+                result.push(entry.item);
+            }
+        }
+
+        // 5. 第二层抽样：逆向反思/警醒棒喝候选池（打破定势思维）
+        const contrarianCandidates = BOOK_PAGES.filter(p =>
+            !selectedPages.has(p.page) && (p.tags || []).some(t => CONTRARIAN_TAGS.has(t))
+        ).sort(() => Math.random() - 0.5);
+
+        const contrarianQuota = Math.max(5, Math.floor(topN * 0.35));
+        for (const p of contrarianCandidates) {
+            if (result.length >= resonantQuota + contrarianQuota) break;
+            selectedPages.add(p.page);
+            result.push(p);
+        }
+
+        // 6. 第三层抽样：全书物理翻阅盲选（模拟随手翻开书页的机缘巧合）
+        const remainingCandidates = BOOK_PAGES.filter(p => !selectedPages.has(p.page))
+            .sort(() => Math.random() - 0.5);
+
+        for (const p of remainingCandidates) {
+            if (result.length >= topN) break;
+            selectedPages.add(p.page);
+            result.push(p);
+        }
+
+        // 7. Fisher-Yates 彻底打乱候选次序，消除位置倾向偏见
+        for (let i = result.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+
+        return result;
     }
 
     // 严防实体泄露审查器：确保神谕文本绝对不包含提问中的特定名词、人名或具体事物
@@ -3763,10 +3875,35 @@
         return reading;
     }
 
+    // 动态多样化的离线/兜底生成器（确保即使无网络/API故障也能体现相对随机的翻书机缘）
+    function getRandomFallback(question) {
+        const candidates = findRelevantPages(question, 12);
+        const selected = candidates[Math.floor(Math.random() * candidates.length)] || BOOK_PAGES[Math.floor(Math.random() * BOOK_PAGES.length)];
+        const FALLBACK_READINGS = [
+            "命运的经纬早已在此翻开，你在意的是眼前的迷雾，还是心中的去向？顺应内心的真实潮汐，答案自会在前路坦然浮现。",
+            "看似无解的死结，往往源于我们总想在同一个坐标里寻找出路。跳出二元对立的框架，破局的生机自会清晰显现。",
+            "有些停滞看似蹉跎，实则是命运在为你蓄力与筛选。不必过度急切，收敛心神，走好脚下的每一步便是通途。",
+            "执念越深，回声越喧嚣。试着退后半步，给纠结的人与事留出喘息的空隙，属于你的机缘自会不期而遇。",
+            "生活从不给标准答案，能给出答案的只有每一次坦然的选择与行动。听从直觉的召唤，放下顾虑，勇敢向前吧。",
+            "若此刻感到困惑，不妨把问题交给时间去沉淀。风起时顺应风势，风停时积蓄羽翼，时机成熟自能水到渠成。"
+        ];
+        const reading = FALLBACK_READINGS[Math.floor(Math.random() * FALLBACK_READINGS.length)];
+        return {
+            page: selected.page,
+            oracle: selected.oracle,
+            reading: reading
+        };
+    }
+
     return {
         BOOK_PAGES,
+        THEME_CONFIG,
+        THEME_KEYWORD_MAP: THEME_CONFIG,
+        CONTRARIAN_TAGS,
+        SERENDIPITY_LENSES,
         findRelevantPages,
         sanitizeOracle,
-        sanitizeReading
+        sanitizeReading,
+        getRandomFallback
     };
 }));

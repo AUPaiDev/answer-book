@@ -35,9 +35,23 @@ const getApiKey = () => process.env.MINIMAX_API_KEY || '';
 
 // 导入完整365页书库及关联检索引擎（带安全兜底，避免缺失模块导致容器崩溃）
 let BOOK_PAGES = [];
-let findRelevantPages = (q, n = 15) => BOOK_PAGES.slice(0, n);
+let findRelevantPages = (q, n = 18) => BOOK_PAGES.slice(0, n);
 let sanitizeOracle = (o, p) => ({ page: p || 1, oracle: o || "顺应内心的真实潮汐" });
 let sanitizeReading = (r) => r || "静心感悟，答案自会在前路浮现。";
+let SERENDIPITY_LENSES = [
+    { name: "冷面警醒·直面代价", cue: "指出求问者容易忽视的深层代价、现实盲区或自我欺骗，给出一记清醒的提醒。" },
+    { name: "逆向破局·跳出局限", cue: "打破非此即彼的纠结，换一个反常识或出其不意的破局角度，寻找第三种可能。" },
+    { name: "幽默解构·举重若轻", cue: "以诙谐、荒谬或自嘲的松弛感消解沉重，提醒求问者别把事情看得太严重。" },
+    { name: "顺应时节·无为留白", cue: "顺水推舟、不争而待，提醒求问者不必急于要答案，给事物自然演进的时间。" },
+    { name: "果决出击·斩断犹豫", cue: "直击拖延与焦虑的本质，唤醒内心的勇气与决断力，以果敢行动破除停滞。" },
+    { name: "见好就收·守中知止", cue: "提醒知止常止、留有余地，防范过犹不及，守住当下的基本盘与内心安宁。" },
+    { name: "天地超然·观照自心", cue: "以诗意、自然隐喻或广阔格局启迪求问者，跳出眼前一城一池的得失。" }
+];
+let getRandomFallback = (q) => ({
+    page: 188,
+    oracle: "潮起潮落自有时，莫问东风",
+    reading: "顺应内心的真实潮汐，答案自会在前路坦然浮现。"
+});
 
 try {
     const pagesModule = require('./pages.js');
@@ -45,6 +59,12 @@ try {
     findRelevantPages = pagesModule.findRelevantPages || findRelevantPages;
     sanitizeOracle = pagesModule.sanitizeOracle || sanitizeOracle;
     sanitizeReading = pagesModule.sanitizeReading || sanitizeReading;
+    if (pagesModule.SERENDIPITY_LENSES && pagesModule.SERENDIPITY_LENSES.length) {
+        SERENDIPITY_LENSES = pagesModule.SERENDIPITY_LENSES;
+    }
+    if (pagesModule.getRandomFallback) {
+        getRandomFallback = pagesModule.getRandomFallback;
+    }
 } catch (e) {
     console.error('⚠️ [Warning] 加载 pages.js 失败，启动备用模式:', e.message);
     BOOK_PAGES = [
@@ -59,27 +79,34 @@ async function callMiniMaxAPI(question, apiKey) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
-    // 基于求问者的问题，智能匹配关联度最高且具哲思机锋的候选固定书页
-    const candidatePages = findRelevantPages(question, 15);
+    // 基于求问者的问题，多层次抽样候选固定书页（意图共鸣 + 逆向破局 + 全书盲选）
+    const candidatePages = findRelevantPages(question, 18);
     const candidateText = candidatePages.map(p => `【第${p.page}页】「${p.oracle}」`).join('\n');
+
+    // 随机注入命运机锋视角，确保每一次翻阅都有不同的启发维度
+    const lens = SERENDIPITY_LENSES[Math.floor(Math.random() * SERENDIPITY_LENSES.length)];
 
     const systemPrompt = `你是《答案之书》（The Book of Answers）的神谕之灵。
 《答案之书》是一本在求问者翻开前就已经印刷成册、拥有固定页码与固定神谕的实体古籍（全书共365页）。
+求问者翻阅古籍的过程，具有命运的机缘与相对随机性。绝不能对相似的问题总是机械重复相同的倾向性答案！
 
-【核心铁律 1 - 绝对禁止在神谕中随意发挥或出现提问主体】：
+【本次命运翻阅的机锋视角】：【${lens.name}】
+视角指引：${lens.cue}
+
+【核心铁律 1 - 顺应机锋，自选一页固定神谕】：
 神谕（oracle）是早已印在书页上的文字，在提问前就已注定！
 神谕【绝对禁止随意发挥】，【绝对严禁出现】求问者提问中提到的任何具体人名、地名、具体物品、食物、行业、公司名或特定词汇！
-神谕必须是完全普适、客观、超脱、放之四海而皆准的独立断章（约6-18字）。
-你必须直接从下方【候选固定书页】中选出一页最契合其心境的固定神谕，并返回其对应的固定页码（page数字）与神谕原文！
+神谕必须是完全普适、客观、超脱的独立断章（约6-18字）。
+请顺应本次【${lens.name}】的机锋视角，从下方【候选固定书页】中敏锐选出一页最契合、最能给求问者带来全新顿悟的固定神谕，返回其对应的固定页码（page数字）与神谕原文！切勿总是挑选第一项或墨守成规。
 
-【核心铁律 2 - 右侧解读（reading）丰富与排版规范】：
+【核心铁律 2 - 右侧解读（reading）深入剖析与排版规范】：
 解读是对该页神谕针对求问者具体问题的深入剖析与点拨！
 在解读中，你【完全可以且应当】直接提及求问者的问题背景、具体纠结的人事与生活处境。
-字数与深度：解读字数要稍微多一些、剖析透彻深刻（严格控制在 90-130 字之间，绝对不可超过书页容纳极限，不可超过135字）。
+字数与深度：严格控制在 90-130 字之间（绝对不可超过书页容纳极限，不可超过135字）。
 深入剖析结构：
 1. 深入剖析其当下心理盲区、现实困扰与深层顾虑；
-2. 借该页神谕的机锋与意象，剖析困局本质与破局视角；
-3. 给出通透、警醒或释怀的行动定力与启示。
+2. 借该页神谕的机锋意象与本次【${lens.name}】视角的启发，剖析困局本质与破局思路；
+3. 给出通透、警醒、释怀或果断的行动启迪。
 
 【候选固定书页】：
 ${candidateText}
@@ -94,7 +121,7 @@ ${candidateText}
                 { role: "system", content: systemPrompt },
                 { role: "user", content: `求问者疑问：「${question}」` }
             ],
-            temperature: 0.9
+            temperature: 0.98
         };
 
         const res = await fetch("https://api.minimaxi.com/v1/chat/completions", {
@@ -306,16 +333,12 @@ const server = http.createServer(async (req, res) => {
                 }));
             } catch (err) {
                 console.error('[Ask] 接口调用异常:', err.message);
-                const fallbackPage = findRelevantPages(question, 1)[0] || BOOK_PAGES[0];
+                const fallbackData = getRandomFallback(question);
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify({
                     success: true,
                     fallback: true,
-                    data: {
-                        page: fallbackPage.page,
-                        oracle: fallbackPage.oracle,
-                        reading: "你在意的是眼前的迷雾，还是心中的去向？命运的经纬早已在此翻开，顺应内心的真实潮汐，答案自会在前路坦然浮现。"
-                    }
+                    data: fallbackData
                 }));
             }
         });
