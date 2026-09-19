@@ -33,8 +33,26 @@ loadEnv();
 const PORT = parseInt(process.env.PORT || '3900', 10);
 const getApiKey = () => process.env.MINIMAX_API_KEY || '';
 
-// 导入完整365页书库及关联检索引擎
-const { BOOK_PAGES, findRelevantPages, sanitizeOracle, sanitizeReading } = require('./pages.js');
+// 导入完整365页书库及关联检索引擎（带安全兜底，避免缺失模块导致容器崩溃）
+let BOOK_PAGES = [];
+let findRelevantPages = (q, n = 15) => BOOK_PAGES.slice(0, n);
+let sanitizeOracle = (o, p) => ({ page: p || 1, oracle: o || "顺应内心的真实潮汐" });
+let sanitizeReading = (r) => r || "静心感悟，答案自会在前路浮现。";
+
+try {
+    const pagesModule = require('./pages.js');
+    BOOK_PAGES = pagesModule.BOOK_PAGES || [];
+    findRelevantPages = pagesModule.findRelevantPages || findRelevantPages;
+    sanitizeOracle = pagesModule.sanitizeOracle || sanitizeOracle;
+    sanitizeReading = pagesModule.sanitizeReading || sanitizeReading;
+} catch (e) {
+    console.error('⚠️ [Warning] 加载 pages.js 失败，启动备用模式:', e.message);
+    BOOK_PAGES = [
+        { page: 1, oracle: "答案在问题提出的那一刻已生裂痕" },
+        { page: 188, oracle: "潮起潮落自有时，莫问东风" },
+        { page: 365, oracle: "此刻合上书卷，答案早已在你的心里" }
+    ];
+}
 
 // 请求 MiniMax API
 async function callMiniMaxAPI(question, apiKey) {

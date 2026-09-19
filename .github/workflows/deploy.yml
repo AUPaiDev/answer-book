@@ -22,8 +22,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Syntax Check
-        run: node --check server.js
+      - name: Syntax & Module Check
+        run: |
+          node --check server.js
+          node --check pages.js
+          node -e "const p = require('./pages.js'); if(!p.BOOK_PAGES || p.BOOK_PAGES.length !== 365) throw new Error('Invalid pages'); console.log('✅ Pages check passed:', p.BOOK_PAGES.length);"
 
   build-and-push-image:
     needs: build-and-test
